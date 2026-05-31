@@ -1,0 +1,1 @@
+- [Project initialized](project-initialized.md) — RoomMark Expo SDK 56 project scaffolded and ready for Supabase setup
