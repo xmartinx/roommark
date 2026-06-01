@@ -433,19 +433,34 @@ Last updated: 2026-06-01
 - Properties list: searchable, pull-to-refresh, real Supabase data
 - Properties new: full form with all fields, saves to Supabase
 - Settings: profile card, sign-out
+- WA room templates: 10 room types, 108 prescribed items with hasWorking flags
+- Inspection wizard: 3-step (property → type → confirm), date picker, meter readings, keys stepper
+- Inspection creation: inserts inspection + rooms + room_items to Supabase in single atomic flow
+- Room list hub: progress bar, status icons, N/A confirmation, add custom room, flagged items modal, bottom action bar
+- Room assessment screen: RECORDING state (record button, pulse animation, timer, process observations) + REVIEW state (C/U/W toggles, notes editor, flagged resolver, add custom item, debounced saves, condition badge)
+- Edge function `process-room-observation`: Whisper transcription + Claude structuring, parse failure recovery (status 200), JWT auth verification — created, not yet deployed
+- `lib/edgeFunction.ts`: typed client helper with `processRoomObservation()` and `arrayBufferToBase64()` (Rule 7 chunked encoding)
 
 ### Stubs awaiting implementation
 - Properties detail [id].tsx — full detail screen not yet built
 - Properties edit [id].tsx — not yet built
-- Inspection new.tsx — stub only
-- Inspection detail [id].tsx — stub only
+- Additional items screen — stub
+- Report preview screen — stub
 - History screen — stub only
 
 ### Not yet started
-- Inspection flow (core product — next major task)
-- Room assessment screens
-- Voice recording integration
-- Edge function: process-room-observation
-- PDF generation
+- EAS build (required to activate native modules: expo-audio, expo-file-system, expo-image-manipulator)
+- Edge function deployment + live testing
+- PDF generation (expo-print templates)
 - RevenueCat subscription integration
 - AsyncStorage session persistence (needs EAS build first)
+
+### ⚠️ Native modules installed — require EAS rebuild
+The following native modules are installed but will not work until after an EAS build:
+- `expo-audio` — voice recording (useAudioRecorder)
+- `expo-file-system` — File class for base64 reading
+- `expo-image-manipulator` — photo compression
+- `expo-print` — PDF generation (future task)
+- `expo-sharing` — sharing PDFs (future task)
+
+JS-only mode (current): Auth, dashboard, properties, inspection wizard, room list, and room assessment UI all work. Voice recording, file reading, and photo features require EAS rebuild.

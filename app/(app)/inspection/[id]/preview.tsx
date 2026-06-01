@@ -1,0 +1,56 @@
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+
+export default function PreviewScreen() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Report Preview</Text>
+        <View style={styles.backSpacer} />
+      </View>
+
+      <View style={styles.content}>
+        <Ionicons name="document-text-outline" size={32} color="#D1D5DB" style={styles.icon} />
+        <Text style={styles.heading}>Report Preview</Text>
+        <Text style={styles.subtitle}>
+          PDF generation and report preview will be built in a future task
+          using expo-print and local HTML templates.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 56,
+    paddingBottom: 12,
+  },
+  backText: { fontSize: 16, color: '#2563EB', fontWeight: '500' },
+  title: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  backSpacer: { width: 60 },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 80,
+  },
+  icon: { marginBottom: 16 },
+  heading: { fontSize: 18, fontWeight: '600', color: '#111827', marginBottom: 8 },
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+});

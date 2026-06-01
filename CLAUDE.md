@@ -648,6 +648,66 @@ Do not disable strict mode to resolve type errors. Fix the types.
 
 ---
 
+## Patterns established in build
+
+### 1. Multi-step wizard pattern
+- Single screen with internal step state (`useState<number>`)
+- Not separate routes — avoids back-button complexity
+- Step indicator shown at top (numbered dots with connecting lines)
+- Each step validates before enabling the Next button
+- Back button decrements step (step 1 → router.back())
+
+### 2. Inspection creation sequence
+- Insert inspection first, get inspection ID from returned row
+- Then insert all rooms using `DEFAULT_ROOMS_BY_PROPERTY(bedrooms, bathrooms)`
+- Then insert all room_items using `getPrescribedItems(state, room_type)`
+- All three inserts must succeed or show error (no partial creation)
+- Use `router.replace()` (not push) to navigate to rooms screen so back button does not return to the wizard
+
+### 3. Nested dynamic routes
+- Pattern: `app/(app)/inspection/[id]/_layout.tsx` contains a Stack for inspection sub-screens
+- Room screen: `app/(app)/inspection/[id]/room/[roomId].tsx`
+- Access params with `useLocalSearchParams()` typed as `{ id: string }` or `{ id: string; roomId: string }`
+- Each sub-route directory needs its own `_layout.tsx` for Expo Router to recognise the nested routes
+
+### 4. Date picker without native modules
+- Use Modal with three ScrollView pickers (day / month / year)
+- Do not use `@react-native-community/datetimepicker` (native module, requires rebuild)
+- Custom JS-only date picker is sufficient for MVP
+- Clamp days to valid range for the selected month/year on confirm
+
+### 5. Audio recording pattern
+- Hook: `useAudioRecorder` from `expo-audio`
+- Multiple recordings supported: stored as URI array in component state
+- For MVP: send most recent recording only (concatenation is future enhancement)
+- Read file with: `import { File } from 'expo-file-system'` — `const file = new File(uri); const base64 = await file.base64()`
+- Always use chunked base64 (`arrayBufferToBase64` in `lib/edgeFunction.ts`) — CLAUDE.md Rule 7
+- **expo-audio is a native module — requires EAS rebuild before recording works on device**
+- **expo-file-system File class is a native module — requires EAS rebuild before it works on device**
+
+### 6. Edge function call pattern
+- All edge function calls go through `lib/edgeFunction.ts`
+- Always include `Authorization: Bearer {session.access_token}`
+- URL: `EXPO_PUBLIC_SUPABASE_URL + '/functions/v1/{function-name}'`
+- Always return status 200 even on AI errors — use `error` field in response body for error handling (CLAUDE.md RoomMark Rule 10)
+- Never crash inspection session on AI failure — show transcript, allow manual entry
+
+### 7. Optimistic UI pattern for item toggles
+- Update local state immediately on user input
+- Debounce Supabase save 800ms (per-item timers in a Map ref)
+- On save error: revert local state by reloading from Supabase
+
+### 8. Photo upload pattern (pending rebuild)
+- `expo-image-picker`: native module (not yet installed)
+- `expo-image-manipulator`: native module (installed, requires EAS rebuild)
+- Compress to 1200px / 0.7 quality before upload
+- Upload path: `{user_id}/{inspection_id}/{room_id}/{timestamp}.jpg`
+- Use `base64-arraybuffer` `decode()` for upload (CLAUDE.md Rule 4)
+- Insert to `room_photos` table after successful upload
+- Photo capture shows placeholder Alert until after EAS rebuild
+
+---
+
 ## Task execution rules
 
 When given a task:
@@ -677,26 +737,29 @@ When given a task:
 
 ## Current build status
 
-**Status:** Dashboard + Properties flow complete. Tab bar navigation active.
+**Status:** Inspection flow complete. Room assessment with AI pipeline built.
 
 - Expo SDK 56.0.8 with TypeScript 6.0.3 strict mode
-- Expo Router (file-based routing): Tabs + Stack hybrid navigation
+- Expo Router: Tabs + Stack + nested dynamic routes
 - Supabase client connected to project `uhvxizhmakkmejktwann`
-- All 8 tables with RLS, indexes, updated_at triggers ✅
-- Auth flow: welcome → sign-up → sign-in → dashboard ✅
-- Dashboard: recent inspections list from Supabase, empty state ✅
-- Properties: list (search, pull-to-refresh), add form, detail stub ✅
-- Tab bar: Home, Properties, History, Settings (Ionicons) ✅
-- All CLAUDE.md rules applied
+- All 8 tables with RLS ✅
+- Auth flow ✅ | Dashboard ✅ | Properties ✅
+- WA room templates: 10 types, 108 items ✅
+- Inspection wizard + room list hub ✅
+- Room assessment: RECORDING + REVIEW states, C/U/W toggles, AI pipeline ✅
+- Edge function: process-room-observation (Whisper + Claude) created, not deployed
+- ⚠️ EAS rebuild required: expo-audio, expo-file-system, expo-image-manipulator installed but not usable until rebuild
 
-Next tasks (in order):
-1. ~~Set up Supabase project and configure env vars~~ ✅
+Next tasks:
+1. ~~Set up Supabase project~~ ✅
 2. ~~Database schema migration~~ ✅
-3. ~~Auth flow (sign in, sign up, profile, password reset)~~ ✅
+3. ~~Auth flow~~ ✅
 4. ~~Properties CRUD~~ ✅
-5. WA room item templates
-6. Inspection workflow (room-by-room voice recording)
-7. Edge function: process-room-observation
-8. PDF generation (expo-print templates)
+5. ~~WA room item templates~~ ✅
+6. ~~Inspection wizard + room list~~ ✅
+7. ~~Room assessment + edge function~~ ✅
+8. EAS build (required to activate native modules)
+9. Edge function deployment + testing
+10. PDF generation (expo-print templates)
 
 Check PROJECT_BRIEF.md for full scope and folder structure.
