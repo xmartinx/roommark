@@ -6,9 +6,11 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: undefined, // Will configure AsyncStorage adapter when needed
+    // In-memory session storage — sessions persist within the app lifecycle
+    // but not across restarts. Configure AsyncStorage adapter after first
+    // EAS build to enable persistent sessions.
+    persistSession: false,
     autoRefreshToken: true,
-    persistSession: true,
     detectSessionInUrl: false,
   },
 });

@@ -677,17 +677,22 @@ When given a task:
 
 ## Current build status
 
-**Status:** Project initialized. Core scaffolding in place.
+**Status:** Auth flow complete. Users can sign up, sign in, and set up profiles.
 
 - Expo SDK 56.0.8 with TypeScript 6.0.3 strict mode
 - Expo Router (file-based routing) with auth and app route groups
-- Supabase client configured (env vars pending)
-- All CLAUDE.md rules applied (keyboard fix, path aliases, etc.)
+- Supabase client connected to project `uhvxizhmakkmejktwann`
+- All 8 tables with RLS, indexes, updated_at triggers ✅
+- Auth trigger: auto-creates profiles row on signup ✅
+- Storage buckets: inspection-photos + inspection-pdfs ✅
+- Auth flow: welcome → sign-up → profile-setup → dashboard ✅
+- Auth flow: welcome → sign-in → dashboard ✅
+- All CLAUDE.md rules applied (keyboard fix, path aliases, Rule 9 retry)
 
 Next tasks (in order):
-1. Set up Supabase project and configure env vars
-2. Database schema migration
-3. Auth flow (sign in, sign up, profile, password reset)
+1. ~~Set up Supabase project and configure env vars~~ ✅
+2. ~~Database schema migration~~ ✅
+3. ~~Auth flow (sign in, sign up, profile, password reset)~~ ✅
 4. Properties CRUD
 5. WA room item templates
 6. Inspection workflow (room-by-room voice recording)
