@@ -698,6 +698,12 @@ will work on device. Required permissions for RoomMark:
 iOS equivalents go in `app.json` `ios.infoPlist` with usage description
 strings. Both require an EAS rebuild to take effect.
 
+### Lesson 7 — Expo Router auto-registers directories as screens
+Expo Router auto-registers any subdirectory as a screen. Never add an
+explicit `<Stack.Screen name="[id]" />` with a name that matches a
+subdirectory name — it creates a duplicate screen crash. Only add
+explicit `Screen` entries for `.tsx` files that need custom header options.
+
 ---
 
 ## Patterns established in build
@@ -763,6 +769,12 @@ strings. Both require an EAS rebuild to take effect.
 - react-dom peer conflicts from expo-router web dependencies are suppressed via `.npmrc` with `legacy-peer-deps=true`
 - `.npmrc` must be committed to the repo so EAS Build uses it
 - Never use `package.json` "overrides" to resolve react version conflicts — it breaks react-native-renderer version matching which must be identical to react
+
+### 10. Keyboard handling pattern
+- Always wrap form screens in `KeyboardAvoidingView` with `behavior={Platform.OS === 'ios' ? 'padding' : 'height'}`
+- Always use `ScrollView` with `keyboardShouldPersistTaps="handled"` and `contentContainerStyle={{ flexGrow: 1 }}`
+- Always place submit buttons inside the `ScrollView` — not outside it — so they scroll above the keyboard
+- `softwareKeyboardLayoutMode: "pan"` in `app.json` is a system-level fix applied after EAS rebuild, but `KeyboardAvoidingView` is still required for dev builds and all environments
 
 ---
 

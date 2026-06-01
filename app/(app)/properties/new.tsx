@@ -151,7 +151,7 @@ export default function NewPropertyScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -298,6 +298,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   scroll: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingBottom: 48,
     paddingTop: 56,
