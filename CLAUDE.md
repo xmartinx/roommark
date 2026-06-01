@@ -688,6 +688,16 @@ error lines, fix the specific conflict rather than forcing resolution
 with `--force` or `--legacy-peer-deps` flags in the build command.
 The `.npmrc` approach persists across all builds; CLI flags do not.
 
+### Lesson 6 — Android permissions must be declared in app.json
+Android permissions must be declared in `app.json` before native features
+will work on device. Required permissions for RoomMark:
+- `android.permission.RECORD_AUDIO` (expo-audio)
+- `android.permission.CAMERA` (expo-image-picker)
+- `android.permission.READ_EXTERNAL_STORAGE` (photo library)
+- `android.permission.WRITE_EXTERNAL_STORAGE` (photo library)
+iOS equivalents go in `app.json` `ios.infoPlist` with usage description
+strings. Both require an EAS rebuild to take effect.
+
 ---
 
 ## Patterns established in build
