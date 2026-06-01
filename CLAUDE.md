@@ -677,23 +677,23 @@ When given a task:
 
 ## Current build status
 
-**Status:** Auth flow complete. Users can sign up, sign in, and set up profiles.
+**Status:** Dashboard + Properties flow complete. Tab bar navigation active.
 
 - Expo SDK 56.0.8 with TypeScript 6.0.3 strict mode
-- Expo Router (file-based routing) with auth and app route groups
+- Expo Router (file-based routing): Tabs + Stack hybrid navigation
 - Supabase client connected to project `uhvxizhmakkmejktwann`
 - All 8 tables with RLS, indexes, updated_at triggers ✅
-- Auth trigger: auto-creates profiles row on signup ✅
-- Storage buckets: inspection-photos + inspection-pdfs ✅
-- Auth flow: welcome → sign-up → profile-setup → dashboard ✅
-- Auth flow: welcome → sign-in → dashboard ✅
-- All CLAUDE.md rules applied (keyboard fix, path aliases, Rule 9 retry)
+- Auth flow: welcome → sign-up → sign-in → dashboard ✅
+- Dashboard: recent inspections list from Supabase, empty state ✅
+- Properties: list (search, pull-to-refresh), add form, detail stub ✅
+- Tab bar: Home, Properties, History, Settings (Ionicons) ✅
+- All CLAUDE.md rules applied
 
 Next tasks (in order):
 1. ~~Set up Supabase project and configure env vars~~ ✅
 2. ~~Database schema migration~~ ✅
 3. ~~Auth flow (sign in, sign up, profile, password reset)~~ ✅
-4. Properties CRUD
+4. ~~Properties CRUD~~ ✅
 5. WA room item templates
 6. Inspection workflow (room-by-room voice recording)
 7. Edge function: process-room-observation

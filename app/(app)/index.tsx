@@ -1,81 +1,366 @@
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/Button';
+import type { Inspection, Property } from '@/lib/types';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface InspectionRow {
+  inspection: Inspection;
+  property: Property | null;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  ingoing:  { bg: '#DCFCE7', text: '#166534' },
+  routine:  { bg: '#DBEAFE', text: '#1E40AF' },
+  outgoing: { bg: '#FEF3C7', text: '#92400E' },
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  ingoing:  'Ingoing',
+  routine:  'Routine',
+  outgoing: 'Outgoing',
+};
+
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  draft:    { bg: '#F3F4F6', text: '#374151' },
+  complete: { bg: '#DCFCE7', text: '#166534' },
+  sent:     { bg: '#DBEAFE', text: '#1E40AF' },
+};
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export default function DashboardScreen() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
+  const [rows, setRows] = useState<InspectionRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const displayName = profile?.full_name || 'Inspector';
-  const agency = profile?.agency_name;
 
-  function handleSignOut() {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => signOut(),
-      },
-    ]);
+  // ------------------------------------------------------------------
+  // Fetch recent inspections with joined property data
+  // ------------------------------------------------------------------
+  const fetchInspections = useCallback(async () => {
+    // Fetch inspections
+    const { data: inspections, error: inspError } = await supabase
+      .from('inspections')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (inspError || !inspections) {
+      setRows([]);
+      return;
+    }
+
+    // Collect unique property IDs and fetch them in a single query
+    const propertyIds = [
+      ...new Set(inspections.map((i) => i.property_id)),
+    ];
+
+    const { data: properties } = await supabase
+      .from('properties')
+      .select('*')
+      .in('id', propertyIds);
+
+    const propertyMap = new Map<string, Property>();
+    if (properties) {
+      for (const p of properties) {
+        propertyMap.set(p.id, p as Property);
+      }
+    }
+
+    // Build rows
+    const joined: InspectionRow[] = inspections.map((i) => ({
+      inspection: i as Inspection,
+      property: propertyMap.get(i.property_id) ?? null,
+    }));
+
+    setRows(joined);
+  }, []);
+
+  useEffect(() => {
+    fetchInspections().finally(() => setLoading(false));
+  }, [fetchInspections]);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await fetchInspections();
+    setRefreshing(false);
   }
+
+  // ------------------------------------------------------------------
+  // Render helpers
+  // ------------------------------------------------------------------
+
+  function renderRow({ item }: { item: InspectionRow }) {
+    const insp = item.inspection;
+    const prop = item.property;
+    const typeStyle = TYPE_COLORS[insp.inspection_type] ?? TYPE_COLORS.ingoing;
+    const statusStyle = STATUS_COLORS[insp.status] ?? STATUS_COLORS.draft;
+
+    return (
+      <TouchableOpacity
+        style={styles.row}
+        activeOpacity={0.6}
+        onPress={() => router.push(`/(app)/inspection/${insp.id}`)}
+      >
+        <View style={styles.rowTop}>
+          <View style={styles.rowAddress}>
+            <Text style={styles.rowAddressText} numberOfLines={1}>
+              {prop ? `${prop.address}, ${prop.suburb}` : 'Unknown property'}
+            </Text>
+            <Text style={styles.rowState}>{prop?.state ?? ''}</Text>
+          </View>
+          <View style={[styles.badge, { backgroundColor: typeStyle.bg }]}>
+            <Text style={[styles.badgeText, { color: typeStyle.text }]}>
+              {TYPE_LABELS[insp.inspection_type] ?? insp.inspection_type}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.rowBottom}>
+          <Text style={styles.rowDate}>
+            {formatDate(insp.inspection_date)}
+          </Text>
+          <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}>
+            <Text style={[styles.badgeText, { color: statusStyle.text }]}>
+              {insp.status.charAt(0).toUpperCase() + insp.status.slice(1)}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  function renderEmpty() {
+    if (loading) return null;
+    return (
+      <View style={styles.empty}>
+        <View style={styles.emptyBox}>
+          <Ionicons name="document-text-outline" size={32} color="#D1D5DB" />
+        </View>
+        <Text style={styles.emptyTitle}>No inspections yet</Text>
+        <Text style={styles.emptySubtitle}>
+          Tap above to start your first inspection
+        </Text>
+      </View>
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // Main render
+  // ------------------------------------------------------------------
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {displayName}</Text>
-        {agency ? <Text style={styles.agency}>{agency}</Text> : null}
+        <Text style={styles.logo}>RoomMark</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/(app)/settings')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="settings-outline" size={24} color="#374151" />
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.placeholder}>Your inspections will appear here</Text>
-      </View>
+      {/* Greeting */}
+      <Text style={styles.greeting}>Hello, {displayName}</Text>
 
-      <View style={styles.footer}>
-        <Button
-          title="Sign Out"
-          onPress={handleSignOut}
-          variant="secondary"
-          style={styles.signOutButton}
+      {/* Start inspection CTA */}
+      <Button
+        title="Start New Inspection"
+        onPress={() => router.push('/(app)/inspection/new')}
+        style={styles.cta}
+      />
+
+      {/* Section label */}
+      <Text style={styles.sectionLabel}>Recent Inspections</Text>
+
+      {/* List */}
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#2563EB" />
+        </View>
+      ) : (
+        <FlatList
+          data={rows}
+          keyExtractor={(item) => item.inspection.id}
+          renderItem={renderRow}
+          ListEmptyComponent={renderEmpty}
+          contentContainerStyle={rows.length === 0 ? styles.listEmpty : styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
         />
-      </View>
+      )}
     </View>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 56,
   },
+  // Header
   header: {
-    marginBottom: 32,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 8,
+  },
+  logo: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#2563EB',
+    letterSpacing: -0.5,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  agency: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#6B7280',
+    paddingHorizontal: 24,
+    marginBottom: 20,
   },
-  content: {
+  cta: {
+    marginHorizontal: 24,
+    marginBottom: 28,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  // List
+  loadingWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  placeholder: {
-    fontSize: 15,
-    color: '#9CA3AF',
+  list: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
-  footer: {
+  listEmpty: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+  },
+  // Row
+  row: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  rowTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  rowAddress: {
+    flex: 1,
+    marginRight: 12,
+  },
+  rowAddressText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  rowState: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  rowBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  signOutButton: {
-    width: '100%',
+  rowDate: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  // Badges
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  // Empty state
+  empty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 60,
+  },
+  emptyBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
   },
 });

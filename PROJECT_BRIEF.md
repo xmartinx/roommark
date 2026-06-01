@@ -419,3 +419,33 @@ D:\Appbuilds\RoomMark\
 - EAS Build: expo.dev/eas
 - RevenueCat: revenuecat.com
 - RoomMark domain: roommark.com.au (register before launch)
+
+---
+
+## Build status
+
+Last updated: 2026-06-01
+
+### Complete and functional
+- Supabase project: schema, RLS, auth trigger, storage buckets (migrations 001-004)
+- Auth flow: welcome, sign-up, profile-setup, sign-in screens
+- Dashboard: recent inspections list, Start New Inspection CTA, bottom tab bar
+- Properties list: searchable, pull-to-refresh, real Supabase data
+- Properties new: full form with all fields, saves to Supabase
+- Settings: profile card, sign-out
+
+### Stubs awaiting implementation
+- Properties detail [id].tsx — full detail screen not yet built
+- Properties edit [id].tsx — not yet built
+- Inspection new.tsx — stub only
+- Inspection detail [id].tsx — stub only
+- History screen — stub only
+
+### Not yet started
+- Inspection flow (core product — next major task)
+- Room assessment screens
+- Voice recording integration
+- Edge function: process-room-observation
+- PDF generation
+- RevenueCat subscription integration
+- AsyncStorage session persistence (needs EAS build first)

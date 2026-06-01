@@ -1,3 +1,4 @@
 - [Project initialized](project-initialized.md) — RoomMark Expo SDK 56 project scaffolded and ready for Supabase setup
 - [Database migrated](database-migrated.md) — All 8 tables, RLS, auth trigger, and storage buckets deployed
 - [Auth flow complete](auth-flow-complete.md) — Welcome, sign-up, sign-in, profile-setup, and profile-aware routing
+- [Dashboard + Properties](dashboard-properties-flow.md) — Tab navigation, dashboard with inspections, properties CRUD
