@@ -648,6 +648,48 @@ Do not disable strict mode to resolve type errors. Fix the types.
 
 ---
 
+## EAS Build lessons
+
+These lessons were learned from the first EAS build attempt. Each one
+prevents a build failure or runtime crash.
+
+### Lesson 1 — First build surfaces dependency conflicts npm install doesn't catch
+EAS uses `npm ci` which is stricter than `npm install` locally. `npm ci`
+requires an exact match against `package-lock.json` and rejects any
+peer dependency conflict with a non-zero exit code. Always check for peer
+dependency warnings after `npm install` locally before triggering a build.
+
+### Lesson 2 — React version must exactly match react-native-renderer
+React Native 0.85.3 (Expo SDK 56) compiles `react-native-renderer@19.2.3`
+into the native APK. If the JS bundle uses a different react version,
+the two renderers diverge and the app crashes at runtime with:
+`"react" (X.Y.Z) and "react-native-renderer" (19.2.3) must be identical`.
+Never bump react independently of the Expo SDK version.
+
+### Lesson 3 — .npmrc legacy-peer-deps suppresses react-dom conflicts
+react-dom peer conflicts come from expo-router's web-target
+dependencies. These are suppressed via `.npmrc` with
+`legacy-peer-deps=true`. This file must be committed to the repo
+so EAS Build picks it up. It is safe for a mobile-only app because
+react-dom is never executed on device — it is only pulled in
+transitively by web-only UI components in expo-router.
+
+### Lesson 4 — npm overrides break react-native-renderer matching
+`package.json` `"overrides"` forces all nested dependencies to use a
+single version of a package. Using it to pin `react` to a version that
+differs from the one compiled into React Native causes the
+react-native-renderer mismatch crash. Never use overrides to resolve
+react version conflicts.
+
+### Lesson 5 — Build failure diagnostics start with the Install phase
+Build failures in the "Install dependencies" phase are always npm/package
+conflicts. Get the full log from the expo.dev dashboard, find the npm
+error lines, fix the specific conflict rather than forcing resolution
+with `--force` or `--legacy-peer-deps` flags in the build command.
+The `.npmrc` approach persists across all builds; CLI flags do not.
+
+---
+
 ## Patterns established in build
 
 ### 1. Multi-step wizard pattern
@@ -705,6 +747,12 @@ Do not disable strict mode to resolve type errors. Fix the types.
 - Use `base64-arraybuffer` `decode()` for upload (CLAUDE.md Rule 4)
 - Insert to `room_photos` table after successful upload
 - Photo capture shows placeholder Alert until after EAS rebuild
+
+### 9. React version management
+- Keep react at exactly the version shipped with React Native in the Expo SDK (19.2.3 for SDK 56) — never bump it independently
+- react-dom peer conflicts from expo-router web dependencies are suppressed via `.npmrc` with `legacy-peer-deps=true`
+- `.npmrc` must be committed to the repo so EAS Build uses it
+- Never use `package.json` "overrides" to resolve react version conflicts — it breaks react-native-renderer version matching which must be identical to react
 
 ---
 
