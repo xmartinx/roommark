@@ -6,6 +6,7 @@ export default function PropertiesLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="new" />
       <Stack.Screen name="[id]" />
+      <Stack.Screen name="edit/[id]" />
     </Stack>
   );
 }

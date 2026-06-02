@@ -440,10 +440,10 @@ Last updated: 2026-06-01
 - Room assessment screen: RECORDING state (record button, pulse animation, timer, process observations) + REVIEW state (C/U/W toggles, notes editor, flagged resolver, add custom item, debounced saves, condition badge)
 - Edge function `process-room-observation`: Whisper transcription + Claude structuring, parse failure recovery (status 200), JWT auth verification — created, not yet deployed
 - `lib/edgeFunction.ts`: typed client helper with `processRoomObservation()` and `arrayBufferToBase64()` (Rule 7 chunked encoding)
+- Properties detail: full property info card, landlord/tenant contact sections (tappable mailto/tel), inspection history list, Start New Inspection CTA, pull-to-refresh, edit link
+- Properties edit: all fields pre-populated, same layout as add form, landlord/tenant optional fields, state picker, chip groups, save + validation
 
 ### Stubs awaiting implementation
-- Properties detail [id].tsx — full detail screen not yet built
-- Properties edit [id].tsx — not yet built
 - Additional items screen — stub
 - Report preview screen — stub
 - History screen — stub only

@@ -828,6 +828,18 @@ fail to match without `-LiteralPath`.
 - Always place submit buttons inside the `ScrollView` — not outside it — so they scroll above the keyboard
 - `softwareKeyboardLayoutMode: "pan"` in `app.json` is a system-level fix applied after EAS rebuild, but `KeyboardAvoidingView` is still required for dev builds and all environments
 
+### 11. Deep link pattern (mailto / tel)
+- Email: `Linking.openURL('mailto:email@example.com')`
+- Phone: `Linking.openURL('tel:+61400000000')`
+- Import `Linking` from `'react-native'`
+- Use tappable rows that open the system default app for each URI scheme
+
+### 12. Screen reload on focus pattern
+- `useFocusEffect(useCallback(() => { loadData(); }, []))`
+- Import `useFocusEffect` from `'expo-router'`
+- Required on any screen editable from a child screen (detail → edit → back to detail must reflect changes)
+- Combine with `useCallback` for the load function to avoid stale closures
+
 ---
 
 ## Task execution rules

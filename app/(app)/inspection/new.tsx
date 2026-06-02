@@ -12,7 +12,7 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -280,6 +280,20 @@ export default function NewInspectionScreen() {
       fetchProperties();
     }, [fetchProperties]),
   );
+
+  // Pre-selected property (from deep link via property detail screen)
+  const { propertyId } = useLocalSearchParams<{ propertyId?: string }>();
+
+  useEffect(() => {
+    if (propertyId && !propLoading && properties.length > 0) {
+      const preselected = properties.find((p) => p.id === propertyId);
+      if (preselected) {
+        setSelectedProperty(preselected);
+        const timer = setTimeout(() => setStep(2), 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [propertyId, propLoading, properties]);
 
   // ------------------------------------------------------------------
   // Step 2: Check for existing ingoing when outgoing selected
