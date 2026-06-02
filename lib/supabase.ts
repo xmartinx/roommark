@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 
@@ -6,11 +7,9 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // In-memory session storage — sessions persist within the app lifecycle
-    // but not across restarts. Configure AsyncStorage adapter after first
-    // EAS build to enable persistent sessions.
-    persistSession: false,
+    storage: AsyncStorage,
     autoRefreshToken: true,
+    persistSession: true,
     detectSessionInUrl: false,
   },
 });

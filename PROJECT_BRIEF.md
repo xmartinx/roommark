@@ -453,7 +453,6 @@ Last updated: 2026-06-01
 - Edge function deployment + live testing
 - PDF generation (expo-print templates)
 - RevenueCat subscription integration
-- AsyncStorage session persistence (needs EAS build first)
 
 ### ⚠️ Native modules installed — require EAS rebuild
 The following native modules are installed but will not work until after an EAS build:
@@ -461,6 +460,7 @@ The following native modules are installed but will not work until after an EAS 
 - `expo-file-system` — File class for base64 reading
 - `expo-image-manipulator` — photo compression
 - `expo-print` — PDF generation (future task)
+- `@react-native-async-storage/async-storage` — session persistence across restarts
 - `expo-sharing` — sharing PDFs (future task)
 
 JS-only mode (current): Auth, dashboard, properties, inspection wizard, room list, and room assessment UI all work. Voice recording, file reading, and photo features require EAS rebuild.

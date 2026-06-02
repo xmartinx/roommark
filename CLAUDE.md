@@ -349,6 +349,18 @@ Same as Rule 7 but specifically for photo data. Photos are typically 200–400KB
 after compression. The chunked base64 function in Rule 7 must be used for all
 photo-to-base64 conversion, not just audio files.
 
+### Rule 16 — AsyncStorage session persistence
+`@react-native-async-storage/async-storage` is a native module
+requiring EAS rebuild before it works on device. It is configured
+as the Supabase auth storage adapter in `lib/supabase.ts` — do not
+import or use AsyncStorage directly anywhere else in the app.
+With `persistSession: true`, `useAuth` must call `getSession()` on
+mount and handle three states: loading (session check in progress),
+authenticated (session found + profile loaded), unauthenticated
+(no session or sign-out). The loading state must prevent any
+navigation redirect until the session check resolves — otherwise
+users see a flash of the welcome screen on every launch.
+
 ---
 
 ## Changelog review policy
@@ -755,6 +767,15 @@ a name with a subdirectory. PowerShell note: use `-LiteralPath` with
 `Remove-Item` and `Test-Path` when paths contain square brackets —
 brackets are wildcard characters in PowerShell and will silently
 fail to match without `-LiteralPath`.
+
+### Lesson 9 — AsyncStorage is a native module that requires EAS rebuild
+Install with: `npx expo install @react-native-async-storage/async-storage`.
+Verify `android/` and `ios/` folders exist in `node_modules`. Do not import
+it directly before an EAS rebuild or sessions will not persist — it is
+configured as the Supabase auth storage adapter in `lib/supabase.ts` and
+not used elsewhere. After rebuild: sessions survive app restarts, token
+refresh is automatic via `autoRefreshToken: true`, and sign-out clears
+AsyncStorage via the Supabase client internally.
 
 ---
 
