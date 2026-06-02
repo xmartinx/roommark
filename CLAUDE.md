@@ -24,31 +24,6 @@ Operating rules:
 
 ---
 
-## Changelog review policy
-
-Before writing any code involving an Expo or React Native package:
-
-1. Fetch the package-specific changelog from GitHub:
-   `https://github.com/expo/expo/blob/main/packages/{package-name}/CHANGELOG.md`
-
-2. Check for breaking changes or deprecations in SDK 56
-   (the current SDK version for this project).
-
-3. If the changelog contradicts any pattern in CLAUDE.md,
-   follow the changelog, update CLAUDE.md, and note the
-   change in the task output.
-
-4. For React Native core changes, check:
-   `https://reactnative.dev/blog`
-
-This review is **mandatory** for any task that installs a new
-package or uses a package not previously used in this project.
-It is **optional but recommended** for tasks using already-proven
-packages (expo-audio, expo-file-system, expo-print etc.)
-that are already documented in CLAUDE.md.
-
----
-
 ## Critical rules — read before every session
 
 These rules are derived from hard-won debugging in VoiceReport, the sister
@@ -373,6 +348,47 @@ passed to the PDF generation function. No network calls during PDF rendering.
 Same as Rule 7 but specifically for photo data. Photos are typically 200–400KB
 after compression. The chunked base64 function in Rule 7 must be used for all
 photo-to-base64 conversion, not just audio files.
+
+---
+
+## Changelog review policy
+
+Before writing any code involving an Expo or React Native
+package — especially a package not previously used in this
+project — fetch and read the package changelog:
+
+https://github.com/expo/expo/blob/main/packages/{package-name}/CHANGELOG.md
+
+Replace {package-name} with the exact package folder name,
+for example:
+- expo-audio → expo-audio
+- expo-file-system → expo-file-system
+- expo-print → expo-print
+- expo-image-manipulator → expo-image-manipulator
+
+Check specifically for:
+1. Breaking changes in SDK 56
+2. Deprecated APIs replaced by new patterns
+3. New recommended usage patterns
+4. Known bugs or workarounds
+
+If the changelog contradicts any pattern documented in this
+CLAUDE.md file, follow the changelog, note the discrepancy
+in task output, and update CLAUDE.md accordingly.
+
+For React Native core changes (not Expo packages), check:
+https://reactnative.dev/blog
+
+This review is:
+- MANDATORY for any newly installed package
+- MANDATORY for any package not yet used in this project
+- RECOMMENDED for packages already proven and documented
+  in this CLAUDE.md (expo-audio, expo-file-system etc.)
+
+Also fetch and read the Expo SDK 56 release notes before
+any task that touches app.json, eas.json, or the build
+configuration:
+https://expo.dev/changelog/sdk-56
 
 ---
 
