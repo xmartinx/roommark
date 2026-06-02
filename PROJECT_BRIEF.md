@@ -438,19 +438,18 @@ Last updated: 2026-06-02
 - Inspection creation: inserts inspection + rooms + room_items to Supabase in single atomic flow
 - Room list hub: progress bar, status icons, N/A confirmation, add custom room, flagged items modal, bottom action bar
 - Room assessment screen: RECORDING state (record button, pulse animation, timer, process observations) + REVIEW state (C/U/W toggles, notes editor, flagged resolver, add custom item, debounced saves, condition badge)
-- Edge function `process-room-observation`: Whisper transcription + Claude structuring, parse failure recovery (status 200), JWT auth verification — created, not yet deployed
+- Edge function `process-room-observation`: Whisper transcription + Claude structuring, parse failure recovery (status 200), JWT auth verification — deployed and secrets configured
 - `lib/edgeFunction.ts`: typed client helper with `processRoomObservation()` and `arrayBufferToBase64()` (Rule 7 chunked encoding)
 - Properties detail: full property info card, landlord/tenant contact sections (tappable mailto/tel), inspection history list, Start New Inspection CTA, pull-to-refresh, edit link
 - Properties edit: all fields pre-populated, same layout as add form, landlord/tenant optional fields, state picker, chip groups, save + validation
+- History screen: search bar, type/status filter pills, month-grouped SectionList, infinite scroll (Load more), pull-to-refresh, empty states, single-query join with properties
 
 ### Stubs awaiting implementation
 - Additional items screen — stub
 - Report preview screen — stub
-- History screen — stub only
 
 ### Not yet started
-- EAS build (required to activate native modules: expo-audio, expo-file-system, expo-image-manipulator)
-- Edge function deployment + live testing
+- EAS build (required to activate native modules: expo-audio, expo-file-system, expo-image-manipulator, expo-updates, AsyncStorage)
 - PDF generation (expo-print templates)
 - RevenueCat subscription integration
 
