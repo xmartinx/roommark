@@ -424,7 +424,7 @@ D:\Appbuilds\RoomMark\
 
 ## Build status
 
-Last updated: 2026-06-01
+Last updated: 2026-06-02
 
 ### Complete and functional
 - Supabase project: schema, RLS, auth trigger, storage buckets (migrations 001-004)

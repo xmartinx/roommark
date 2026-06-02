@@ -1,6 +1,14 @@
-// Claude API client — edge function proxy.
-// All Claude calls go through Supabase Edge Functions, not called directly from the app.
-// This module will provide typed helpers for the process-room-observation edge function.
+// ============================================================================
+// RoomMark — Claude API types and helpers
+//
+// The real edge function client (processRoomObservation) lives in:
+//   lib/edgeFunction.ts
+//
+// These interfaces are kept for future direct Claude API usage (e.g. prompt
+// generation helpers, response validation). The edge function proxy pattern
+// means the app never calls Claude directly — all calls go through Supabase
+// Edge Functions.
+// ============================================================================
 
 export interface RoomObservationRequest {
   audioBase64: string;
@@ -25,11 +33,4 @@ export interface RoomObservationResponse {
   }>;
   generalNotes: string | null;
   overallCondition: 'good' | 'fair' | 'poor' | null;
-}
-
-// Placeholder — edge function call will be implemented in a future task
-export async function processRoomObservation(
-  _request: RoomObservationRequest
-): Promise<RoomObservationResponse> {
-  throw new Error('Not implemented — edge function call coming in a future task');
 }
