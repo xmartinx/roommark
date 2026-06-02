@@ -864,6 +864,14 @@ AsyncStorage via the Supabase client internally.
 - **Apply to:** properties list, dashboard recent inspections, history list, and any future list screen.
 - Combine with `useCallback` for the load function to avoid stale closures.
 
+### 13. Auth guard pattern
+- Auth guard lives in `app/(app)/_layout.tsx` — NOT in `app/index.tsx`
+- `app/index.tsx` handles initial routing on launch only (it unmounts once the user navigates to `(app)`)
+- `app/(app)/_layout.tsx` watches session reactively via `useEffect` and redirects to welcome when session becomes null (sign-out, expiry)
+- `app/(auth)/_layout.tsx` reverse guard: redirects signed-in users to `(app)`
+- Always check `loading` before acting on session value to prevent redirect loops during session restore
+- Never call `router.replace()` directly after `signOut()` — let the auth guard respond to the session change
+
 ---
 
 ## Task execution rules

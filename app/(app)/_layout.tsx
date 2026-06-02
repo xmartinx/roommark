@@ -1,5 +1,7 @@
-import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
+import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/hooks/useAuth';
 
 const TAB_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   index: 'home-outline',
@@ -16,6 +18,23 @@ const TAB_ICON_FOCUSED: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export default function AppLayout() {
+  const { session, loading } = useAuth();
+  const router = useRouter();
+
+  // Auth guard: redirect to welcome when session is lost (sign-out, expiry)
+  useEffect(() => {
+    if (loading) return;
+    if (!session) {
+      router.replace('/(auth)/welcome');
+    }
+  }, [session, loading, router]);
+
+  // Show nothing while session is being restored — prevents flash
+  if (loading) return null;
+
+  // Safety: if no session after load, don't render the app
+  if (!session) return null;
+
   return (
     <Tabs
       screenOptions={({ route }) => ({
