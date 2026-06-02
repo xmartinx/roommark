@@ -855,11 +855,14 @@ AsyncStorage via the Supabase client internally.
 - Import `Linking` from `'react-native'`
 - Use tappable rows that open the system default app for each URI scheme
 
-### 12. Screen reload on focus pattern
+### 12. Screen reload on focus + stale data pattern
 - `useFocusEffect(useCallback(() => { loadData(); }, []))`
 - Import `useFocusEffect` from `'expo-router'`
 - Required on any screen editable from a child screen (detail → edit → back to detail must reflect changes)
-- Combine with `useCallback` for the load function to avoid stale closures
+- **Stale data pattern:** any list screen that can have new items added from a child screen MUST use `useFocusEffect` to reload on focus. `useEffect` alone only fires on mount and does not reload when returning from a child screen.
+- `useFocusEffect` replaces `useEffect` for data loading on list screens — do not use both simultaneously as it causes double fetching (useFocusEffect fires on mount AND on focus).
+- **Apply to:** properties list, dashboard recent inspections, history list, and any future list screen.
+- Combine with `useCallback` for the load function to avoid stale closures.
 
 ---
 

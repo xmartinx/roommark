@@ -28,10 +28,20 @@ export function useAuth() {
   }, [session?.user.id, loadProfile]);
 
   // ------------------------------------------------------------------
-  // Sign out
+  // Sign out — clears Supabase session and local state.
+  // Local state is always cleared even if the Supabase call fails
+  // (e.g. AsyncStorage not yet functional before EAS rebuild).
+  // The SIGNED_OUT listener also fires and clears state redundantly
+  // for defence in depth.
   // ------------------------------------------------------------------
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Supabase signOut may fail before EAS rebuild (AsyncStorage
+      // native module not yet active). Clear local state regardless.
+    }
+    setSession(null);
     setProfile(null);
   }, []);
 

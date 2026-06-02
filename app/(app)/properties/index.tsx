@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import type { Property } from '@/lib/types';
@@ -43,9 +43,11 @@ export default function PropertiesListScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchProperties().finally(() => setLoading(false));
-  }, [fetchProperties]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProperties().finally(() => setLoading(false));
+    }, [fetchProperties]),
+  );
 
   async function onRefresh() {
     setRefreshing(true);

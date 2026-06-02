@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -110,9 +110,11 @@ export default function DashboardScreen() {
     setRows(joined);
   }, []);
 
-  useEffect(() => {
-    fetchInspections().finally(() => setLoading(false));
-  }, [fetchInspections]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchInspections().finally(() => setLoading(false));
+    }, [fetchInspections]),
+  );
 
   async function onRefresh() {
     setRefreshing(true);

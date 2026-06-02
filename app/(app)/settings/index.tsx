@@ -1,15 +1,28 @@
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/Button';
 
 export default function SettingsScreen() {
   const { profile, signOut } = useAuth();
 
   function handleSignOut() {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => signOut() },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await supabase.auth.signOut();
+            // Navigation redirect happens automatically via the
+            // SIGNED_OUT event in useAuth — do not call router manually.
+          } catch {
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+          }
+        },
+      },
     ]);
   }
 
