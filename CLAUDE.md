@@ -24,6 +24,31 @@ Operating rules:
 
 ---
 
+## Changelog review policy
+
+Before writing any code involving an Expo or React Native package:
+
+1. Fetch the package-specific changelog from GitHub:
+   `https://github.com/expo/expo/blob/main/packages/{package-name}/CHANGELOG.md`
+
+2. Check for breaking changes or deprecations in SDK 56
+   (the current SDK version for this project).
+
+3. If the changelog contradicts any pattern in CLAUDE.md,
+   follow the changelog, update CLAUDE.md, and note the
+   change in the task output.
+
+4. For React Native core changes, check:
+   `https://reactnative.dev/blog`
+
+This review is **mandatory** for any task that installs a new
+package or uses a package not previously used in this project.
+It is **optional but recommended** for tasks using already-proven
+packages (expo-audio, expo-file-system, expo-print etc.)
+that are already documented in CLAUDE.md.
+
+---
+
 ## Critical rules — read before every session
 
 These rules are derived from hard-won debugging in VoiceReport, the sister
