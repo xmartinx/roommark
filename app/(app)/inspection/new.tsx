@@ -505,7 +505,15 @@ export default function NewInspectionScreen() {
       {/* ================================================================ */}
       {step === 1 && (
         <View style={styles.stepContent}>
-          <Text style={styles.stepPrompt}>Select a property</Text>
+          <View style={styles.stepPromptRow}>
+            <Text style={styles.stepPrompt}>Select a property</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/(app)/properties/new')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="add-circle" size={28} color="#2563EB" />
+            </TouchableOpacity>
+          </View>
 
           {/* Search */}
           <View style={styles.searchWrap}>
@@ -559,9 +567,27 @@ export default function NewInspectionScreen() {
               }}
               contentContainerStyle={filteredProps.length === 0 ? styles.listEmpty : undefined}
               ListEmptyComponent={
-                <View style={styles.emptyWrap}>
-                  <Text style={styles.emptyText}>No properties found</Text>
-                </View>
+                properties.length === 0 ? (
+                  <View style={styles.emptyWrap}>
+                    <View style={styles.emptyBox}>
+                      <Ionicons name="business-outline" size={32} color="#D1D5DB" />
+                    </View>
+                    <Text style={styles.emptyTitle}>No properties yet</Text>
+                    <Text style={styles.emptySubtitle}>
+                      Add your first property to start an inspection
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.emptyAddBtn}
+                      onPress={() => router.push('/(app)/properties/new')}
+                    >
+                      <Text style={styles.emptyAddBtnText}>Add Your First Property</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.emptyWrap}>
+                    <Text style={styles.emptyText}>No properties match your search</Text>
+                  </View>
+                )
               }
             />
           )}
@@ -925,11 +951,16 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 48,
   },
+  stepPromptRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   stepPrompt: {
     fontSize: 20,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 16,
   },
   // Search
   searchWrap: {
@@ -953,8 +984,23 @@ const styles = StyleSheet.create({
   list: { flex: 1 },
   listEmpty: { flexGrow: 1 },
   loadingSpinner: { marginTop: 40 },
-  emptyWrap: { alignItems: 'center', paddingTop: 40 },
+  emptyWrap: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 16 },
   emptyText: { fontSize: 15, color: '#9CA3AF' },
+  emptyBox: {
+    width: 72, height: 72,
+    borderRadius: 12,
+    borderWidth: 2, borderColor: '#E5E7EB', borderStyle: 'dashed',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: { fontSize: 17, fontWeight: '600', color: '#6B7280', marginBottom: 4 },
+  emptySubtitle: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginBottom: 20 },
+  emptyAddBtn: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 20, paddingVertical: 12,
+    borderRadius: 10,
+  },
+  emptyAddBtnText: { fontSize: 15, color: '#FFFFFF', fontWeight: '600' },
   propRow: {
     flexDirection: 'row',
     alignItems: 'center',

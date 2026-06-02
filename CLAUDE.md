@@ -745,6 +745,17 @@ explicit `<Stack.Screen name="[id]" />` with a name that matches a
 subdirectory name — it creates a duplicate screen crash. Only add
 explicit `Screen` entries for `.tsx` files that need custom header options.
 
+### Lesson 8 — File + directory name collision causes duplicate screen crash
+If both a `[id].tsx` file AND a `[id]/` directory exist in the same folder,
+Expo Router registers both as screens with the same name causing a
+duplicate screen crash. When converting a file route to a directory
+route, confirm the original `.tsx` file is deleted. Check with:
+`Get-ChildItem app/(app)/inspection/` and verify no `.tsx` file shares
+a name with a subdirectory. PowerShell note: use `-LiteralPath` with
+`Remove-Item` and `Test-Path` when paths contain square brackets —
+brackets are wildcard characters in PowerShell and will silently
+fail to match without `-LiteralPath`.
+
 ---
 
 ## Patterns established in build
