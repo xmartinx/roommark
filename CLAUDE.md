@@ -779,6 +779,92 @@ AsyncStorage via the Supabase client internally.
 
 ---
 
+## Pre-EAS build check — run before every cloud build
+
+Before triggering any EAS cloud build, run this check.
+Do not start a cloud build without completing it first.
+
+### STEP 1 — Classify all changes since last build
+
+Run: `git diff [last-build-commit]..HEAD --name-only`
+Categorise each changed file:
+
+| Change type                          | EAS rebuild needed? |
+|--------------------------------------|---------------------|
+| Text / layout / style / component    | No — EAS Update     |
+| New screen / navigation (JS only)    | No — EAS Update     |
+| Images / assets (non-icon/splash)    | No — EAS Update     |
+| New npm package (JS only, no native) | No — EAS Update     |
+| New npm package WITH native code     | YES                 |
+| app.json / app.config.ts change      | YES                 |
+| eas.json change                      | YES                 |
+| Permissions change                   | YES                 |
+| App icon / splash screen change      | YES                 |
+| Android package name / applicationId | YES                 |
+| Expo config plugin change            | YES                 |
+| Android or iOS native folder edits   | YES                 |
+| SDK version upgrade                  | YES                 |
+
+### STEP 2 — Run checks
+
+```
+npx expo-doctor
+```
+Report any issues and fix before building.
+
+If `package.json` dependencies changed since last build:
+```
+npm install
+```
+Verify no ERESOLVE errors (see EAS Build lessons).
+
+Run type check across the full project.
+Zero type errors required before building.
+
+### STEP 3 — State clearly
+
+- EAS cloud build needed: yes / no
+- If no: EAS Update is sufficient (JS/asset changes only)
+- If yes: state which specific change requires rebuild
+- Remaining risks: any known issues that may affect build
+
+### STEP 4 — Do not start the cloud build
+
+Report findings only. The developer triggers the build
+manually after reviewing the report.
+
+### Native modules confirmed installed in this project
+
+(always require EAS rebuild if newly added):
+- expo-audio
+- expo-file-system
+- expo-image-manipulator
+- expo-print
+- expo-sharing
+- @react-native-async-storage/async-storage
+- expo-dev-client
+- expo-updates
+
+### EAS Update commands
+
+Push JS update to development channel:
+```
+eas update --channel development --message "description"
+```
+
+This deploys JS bundle changes to all installed
+development builds without requiring a full rebuild.
+Use this for all JS-only changes during active testing.
+Only use full EAS cloud build when native changes
+are required (see classification table above).
+
+Note: `expo-updates` IS a native module. The first time
+it is added it requires an EAS rebuild to activate.
+After that initial rebuild, all JS updates can be
+pushed via `eas update` without rebuilding.
+
+---
+
 ## Patterns established in build
 
 ### 1. Multi-step wizard pattern

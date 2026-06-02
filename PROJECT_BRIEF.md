@@ -464,3 +464,35 @@ The following native modules are installed but will not work until after an EAS 
 - `expo-sharing` — sharing PDFs (future task)
 
 JS-only mode (current): Auth, dashboard, properties, inspection wizard, room list, and room assessment UI all work. Voice recording, file reading, and photo features require EAS rebuild.
+
+---
+
+## Build workflow
+
+### Pre-build checklist (run before every EAS cloud build)
+
+1. Run pre-EAS-build-check task in Claude Code
+2. `expo-doctor` reports no issues
+3. TypeScript reports zero errors
+4. All changes classified — rebuild confirmed necessary
+5. `git status` clean (nothing uncommitted)
+6. `git push origin main` completed
+
+### EAS Update (JS-only changes)
+
+- Command: `eas update --channel development --message "..."`
+- Use for: UI fixes, logic changes, new JS screens
+- Do not use for: native module changes, app.json changes, permission changes
+
+### EAS Cloud Build (native changes)
+
+- Command: `eas build --platform android --profile development`
+- Use for: new native modules, config changes, permissions
+- Always run pre-build-check first
+
+### Current EAS project
+
+- Project ID: `3d04f21b-4fc6-4704-bae0-503643b9aaa4`
+- Updates URL: `https://u.expo.dev/3d04f21b-4fc6-4704-bae0-503643b9aaa4`
+- Android package: `com.greatsouthernlabs.roommark`
+- Channels: development, preview, production

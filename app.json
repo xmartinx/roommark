@@ -39,6 +39,12 @@
       "expo-router",
       "expo-status-bar"
     ],
+    "updates": {
+      "url": "https://u.expo.dev/3d04f21b-4fc6-4704-bae0-503643b9aaa4"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "extra": {
       "router": {},
       "eas": {
