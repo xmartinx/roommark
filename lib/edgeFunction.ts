@@ -25,6 +25,14 @@ interface ProcessRoomObservationParams {
   inspectionId: string;
   roomId: string;
   prescribedItems: RoomItemTemplate[];
+  existingItems?: Array<{
+    item_key: string;
+    item_label: string;
+    clean: boolean | null;
+    undamaged: boolean | null;
+    working: boolean | null;
+    notes: string | null;
+  }>;
   accessToken: string;
   supabaseUrl: string;
 }
@@ -43,6 +51,7 @@ export async function processRoomObservation(
     inspection_id: params.inspectionId,
     room_id: params.roomId,
     prescribed_items: params.prescribedItems,
+    ...(params.existingItems?.length ? { existing_items: params.existingItems } : {}),
   };
 
   const url = `${params.supabaseUrl}/functions/v1/process-room-observation`;

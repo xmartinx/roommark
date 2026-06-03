@@ -191,6 +191,14 @@ export interface EdgeFunctionRequest {
     label: string;
     hasWorking: boolean;
   }>;
+  existing_items?: Array<{
+    item_key: string;
+    item_label: string;
+    clean: boolean | null;
+    undamaged: boolean | null;
+    working: boolean | null;
+    notes: string | null;
+  }>;
 }
 
 /** Success / error union returned by lib/edgeFunction.ts */

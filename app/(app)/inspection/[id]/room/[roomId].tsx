@@ -334,6 +334,16 @@ export default function RoomAssessmentScreen() {
         inspectionId,
         roomId,
         prescribedItems: templates,
+        existingItems: items
+          .filter((i) => i.clean !== null || i.undamaged !== null || i.working !== null)
+          .map((i) => ({
+            item_key: i.item_key,
+            item_label: i.item_label,
+            clean: i.clean,
+            undamaged: i.undamaged,
+            working: i.working,
+            notes: i.notes,
+          })),
         accessToken,
         supabaseUrl,
       });
@@ -729,6 +739,26 @@ export default function RoomAssessmentScreen() {
           </View>
         )}
 
+        {/* Record More / Re-record buttons */}
+        <View style={styles.reRecordRow}>
+          <TouchableOpacity
+            style={styles.recordMoreButton}
+            onPress={() => setScreenState('recording')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={16} color="#2563EB" />
+            <Text style={styles.recordMoreText}>Record More</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.reRecordButton}
+            onPress={handleReRecord}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="refresh" size={16} color="#6B7280" />
+            <Text style={styles.reRecordText}>Re-record</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Items list */}
         <FlatList
           data={items}
@@ -800,18 +830,54 @@ export default function RoomAssessmentScreen() {
           <TouchableOpacity onPress={router.back} style={styles.bottomBack}>
             <Text style={styles.bottomBackText}>← Back</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.bottomRecordAgain}
-            onPress={() => setScreenState('recording')}
-          >
-            <Text style={styles.bottomRecordIcon}>🎤</Text>
-            <Text style={styles.bottomRecordText}>Record Again</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.bottomDone} onPress={handleDone}>
             <Text style={styles.bottomDoneText}>Done ✓</Text>
           </TouchableOpacity>
         </View>
       </View>
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // Re-record handler — clears all assessments and resets room
+  // ------------------------------------------------------------------
+  async function handleReRecord() {
+    Alert.alert(
+      'Re-record this room?',
+      'This will clear all current observations and start fresh.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Re-record',
+          style: 'destructive',
+          onPress: async () => {
+            // 1. Delete all room_items and re-insert prescribed items fresh
+            await supabase.from('room_items').delete().eq('room_id', roomId);
+            const freshItems = templates.map((t) => ({
+              room_id: roomId,
+              item_key: t.key,
+              item_label: t.label,
+              is_prescribed: true,
+              clean: null,
+              undamaged: null,
+              working: null,
+              notes: null,
+              flagged: false,
+            }));
+            if (freshItems.length > 0) {
+              await supabase.from('room_items').insert(freshItems);
+            }
+            // 2. Reset room status
+            await supabase.from('rooms').update({ status: 'pending', overall_condition: null, general_notes: null }).eq('id', roomId);
+            // 3. Reset local state
+            setOverallCondition(null);
+            setGeneralNotes(null);
+            setRecordings([]);
+            setScreenState('recording');
+            await loadData();
+          },
+        },
+      ],
     );
   }
 
@@ -1092,13 +1158,21 @@ const styles = StyleSheet.create({
   },
   bottomBack: { paddingVertical: 4 },
   bottomBackText: { fontSize: 16, color: '#2563EB', fontWeight: '500' },
-  bottomRecordAgain: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: 10, borderWidth: 1.5, borderColor: '#2563EB',
+  reRecordRow: {
+    flexDirection: 'row', gap: 8, paddingHorizontal: 24, marginBottom: 14,
   },
-  bottomRecordIcon: { fontSize: 16 },
-  bottomRecordText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
+  recordMoreButton: {
+    flex: 1, borderWidth: 1.5, borderColor: '#2563EB', borderRadius: 8,
+    paddingVertical: 8, paddingHorizontal: 12, alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'center', gap: 4,
+  },
+  recordMoreText: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  reRecordButton: {
+    flex: 1, borderWidth: 1.5, borderColor: '#9CA3AF', borderRadius: 8,
+    paddingVertical: 8, paddingHorizontal: 12, alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'center', gap: 4,
+  },
+  reRecordText: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
   bottomDone: {
     backgroundColor: '#2563EB', paddingHorizontal: 24,
     paddingVertical: 12, borderRadius: 10,

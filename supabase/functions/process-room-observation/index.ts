@@ -27,6 +27,14 @@ interface RequestBody {
   inspection_id: string;
   room_id: string;
   prescribed_items: PrescribedItem[];
+  existing_items?: Array<{
+    item_key: string;
+    item_label: string;
+    clean: boolean | null;
+    undamaged: boolean | null;
+    working: boolean | null;
+    notes: string | null;
+  }>;
 }
 
 interface AssessedItem {
@@ -69,6 +77,14 @@ function buildSystemPrompt(body: RequestBody): string {
     .map((item) => `- ${item.key}: "${item.label}"`)
     .join('\n');
 
+  const existingBlock = body.existing_items?.length
+    ? '\nEXISTING ASSESSMENTS FOR THIS ROOM\n' +
+      'The following items have already been assessed. Only update an item if the new transcript explicitly mentions it. Do not overwrite items not mentioned.\n' +
+      body.existing_items
+        .map((i) => `- ${i.item_label}: clean=${i.clean}, undamaged=${i.undamaged}, working=${i.working}, notes="${i.notes ?? 'none'}"`)
+        .join('\n')
+    : '';
+
   return `You are a property inspection assistant for Australian rental property condition reports. You process voice observations made by a property manager or landlord during a room-by-room inspection and return structured JSON for inclusion in a legally compliant condition report.
 
 CONTEXT
@@ -81,7 +97,7 @@ Inspection date: ${body.date}
 
 PRESCRIBED ITEMS FOR THIS ROOM
 The following items must be assessed if mentioned in the transcript. Do not assess items not mentioned. Do not fabricate assessments.
-${itemsList}
+${itemsList}${existingBlock}
 
 INSTRUCTIONS
 1. Read the transcript carefully.
