@@ -795,6 +795,135 @@ AsyncStorage via the Supabase client internally.
 
 ---
 
+## Code completion rule
+
+Never leave implementation code commented out with
+"uncomment after rebuild" or "after EAS build" notes.
+Two acceptable states only:
+
+1. **Not implemented** — clean placeholder with a searchable
+   TODO comment in this exact format:
+   `// TODO(native): implement after EAS build activates`
+   `// {package-name} — {description of what to implement}`
+
+2. **Fully implemented** — real code, no simulation,
+   no placeholders, no empty strings standing in for
+   real data.
+
+Half-implemented code with commented-out sections causes
+repeated debugging cycles and cached-response confusion.
+
+When an EAS build activates a native module, immediately
+run the post-build activation checklist (see below) to
+find and implement all `TODO(native)` comments in one task.
+
+---
+
+## Post-build activation checklist
+
+Run this task immediately after every successful EAS build
+that activates new native modules.
+
+Search all source files in `app/` and `lib/` for:
+- Comments containing `TODO(native)`
+- Comments containing `uncomment after rebuild`
+- Comments containing `after EAS build`
+- Empty string placeholders used as audio/file data
+- Any function that sets state without calling the
+  real native API it was supposed to call
+- Simulated URIs constructed as strings with timestamps
+
+For each found item: implement fully using the real
+native API. Do not leave any `TODO(native)` comments
+after this task completes.
+
+After implementing all items:
+- Use `typescript-lsp` to verify zero type errors
+- Confirm no `TODO(native)` comments remain:
+  `grep -r "TODO(native)" app/ lib/` (should return no results)
+
+---
+
+## Verification requirements
+
+Every task that modifies code must include these items
+in its completion report — without exception:
+
+1. **ACTUAL CODE SHOWN:** For any function that was
+   implemented or modified, show the complete final
+   function body in the report. Not documentation.
+   Not a description. The actual code.
+   This prevents cached-response echoing.
+
+2. **NEW COMMIT HASH:** Always run `git log --oneline -1`
+   after committing and include the hash in the report.
+   If the hash matches a previous task's hash, the
+   commit did not happen — investigate before reporting
+   done.
+
+3. **TYPESCRIPT VERIFICATION:** Show the TypeScript
+   output confirming zero type errors across all
+   modified files. If errors exist, fix them before
+   committing.
+
+4. **FILE STATE ASSERTION:** For any task that continues
+   previous work, begin by reading the target file(s)
+   and reporting their actual current state. Never
+   operate from memory of what was "supposed" to be
+   there from a previous task.
+
+---
+
+## Session start checklist
+
+At the start of every Claude Code session, before any
+task work begins:
+
+1. Run: `npx expo-doctor`
+   Report any issues. Fix before proceeding if critical.
+
+2. Run: `git log --oneline -5`
+   Confirm current HEAD and recent commit history.
+
+3. Read `memory/MEMORY.md` if it exists.
+   Note any known issues or incomplete items.
+
+4. Read `PROJECT_BRIEF.md` build status section.
+   Identify the current state of stubs and partials.
+
+5. Search for incomplete implementations:
+   `grep -r "TODO(native)" app/ lib/`
+   `grep -r "uncomment after" app/ lib/`
+   Report any found — these are immediate priorities
+   if the relevant native module is now active.
+
+Only proceed with the assigned task after completing
+the above.
+
+---
+
+## Memory file maintenance
+
+The file `memory/MEMORY.md` must be updated after every
+significant task — not just milestones.
+
+After each task, append an entry in this format:
+
+```
+## [date] — [commit hash] — [task title]
+- Implemented: [what was fully implemented]
+- Stubbed/pending: [what is still a stub or TODO]
+- Known issues: [any issues discovered during the task]
+- Next priority: [what should be done next]
+```
+
+This gives every future session a reliable source of
+current project state. When `PROJECT_BRIEF.md` and
+`MEMORY.md` conflict, `MEMORY.md` is more recent and
+takes precedence.
+
+---
+
 ## Pre-EAS build check — run before every cloud build
 
 Before triggering any EAS cloud build, run this check.
@@ -973,6 +1102,18 @@ pushed via `eas update` without rebuilding.
 - `app/(auth)/_layout.tsx` reverse guard: redirects signed-in users to `(app)`
 - Always check `loading` before acting on session value to prevent redirect loops during session restore
 - Never call `router.replace()` directly after `signOut()` — let the auth guard respond to the session change
+
+### 14. Forcing function pattern
+Every prompt that modifies code must end with a
+VERIFICATION section requiring:
+- Actual implemented function bodies shown in report
+- `git log --oneline -1` confirming new commit hash
+- TypeScript output confirming zero errors
+- File state assertion (read file first, report actual
+  contents, then modify)
+Without these forcing functions Claude Code may return
+cached or previously-seen responses that look complete
+but don't reflect actual file changes.
 
 ---
 
