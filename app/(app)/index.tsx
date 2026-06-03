@@ -66,6 +66,25 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Draft inspection within last 2 hours — "Return to Inspection" banner
+  const [draftInspection, setDraftInspection] = useState<Inspection | null>(null);
+
+  useEffect(() => {
+    if (!profile) return;
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    supabase
+      .from('inspections')
+      .select('*')
+      .eq('status', 'draft')
+      .gte('updated_at', twoHoursAgo)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data }) => {
+        if (data) setDraftInspection(data as Inspection);
+      });
+  }, [profile]);
+
   const displayName = profile?.full_name || 'Inspector';
 
   // ------------------------------------------------------------------
@@ -200,6 +219,23 @@ export default function DashboardScreen() {
       {/* Greeting */}
       <Text style={styles.greeting}>Hello, {displayName}</Text>
 
+      {/* Return to inspection banner */}
+      {draftInspection && (
+        <TouchableOpacity
+          style={styles.draftBanner}
+          onPress={() => router.push(`/(app)/inspection/${draftInspection.id}/rooms`)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.draftBannerLeft}>
+            <Ionicons name="hourglass-outline" size={18} color="#2563EB" />
+            <Text style={styles.draftBannerText}>
+              Inspection in progress — Continue where you left off
+            </Text>
+          </View>
+          <Ionicons name="arrow-forward-circle" size={22} color="#2563EB" />
+        </TouchableOpacity>
+      )}
+
       {/* Start inspection CTA */}
       <Button
         title="Start New Inspection"
@@ -260,8 +296,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     paddingHorizontal: 24,
-    marginBottom: 20,
+    marginBottom: 12,
   },
+  draftBanner: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginHorizontal: 24, marginBottom: 20,
+    backgroundColor: '#EFF6FF', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#BFDBFE',
+  },
+  draftBannerLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1,
+  },
+  draftBannerText: { fontSize: 14, fontWeight: '500', color: '#1E40AF', flex: 1 },
   cta: {
     marginHorizontal: 24,
     marginBottom: 28,

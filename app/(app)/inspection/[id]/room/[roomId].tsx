@@ -633,10 +633,12 @@ export default function RoomAssessmentScreen() {
           )}
         </View>
 
-        {/* Hint */}
+        {/* Hint — different text for first-time vs returning */}
         {recordings.length === 0 && !isRecording && (
           <Text style={styles.hint}>
-            Tip: mention {hintItems}
+            {items.some((i) => i.clean !== null || i.undamaged !== null || i.working !== null)
+              ? 'Add more observations — existing assessments preserved'
+              : `Tip: mention ${hintItems}`}
           </Text>
         )}
 
@@ -798,8 +800,15 @@ export default function RoomAssessmentScreen() {
           <TouchableOpacity onPress={router.back} style={styles.bottomBack}>
             <Text style={styles.bottomBackText}>← Back</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.bottomRecordAgain}
+            onPress={() => setScreenState('recording')}
+          >
+            <Text style={styles.bottomRecordIcon}>🎤</Text>
+            <Text style={styles.bottomRecordText}>Record Again</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.bottomDone} onPress={handleDone}>
-            <Text style={styles.bottomDoneText}>Done</Text>
+            <Text style={styles.bottomDoneText}>Done ✓</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1083,6 +1092,13 @@ const styles = StyleSheet.create({
   },
   bottomBack: { paddingVertical: 4 },
   bottomBackText: { fontSize: 16, color: '#2563EB', fontWeight: '500' },
+  bottomRecordAgain: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderRadius: 10, borderWidth: 1.5, borderColor: '#2563EB',
+  },
+  bottomRecordIcon: { fontSize: 16 },
+  bottomRecordText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
   bottomDone: {
     backgroundColor: '#2563EB', paddingHorizontal: 24,
     paddingVertical: 12, borderRadius: 10,

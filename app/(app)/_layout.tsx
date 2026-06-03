@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
-import { Tabs, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { Tabs, useRouter, usePathname } from 'expo-router';
+import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -20,6 +21,13 @@ const TAB_ICON_FOCUSED: Record<string, keyof typeof Ionicons.glyphMap> = {
 export default function AppLayout() {
   const { session, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const inspectionRef = useRef(false);
+
+  // Track whether we're inside an inspection to enable tab guard
+  useEffect(() => {
+    inspectionRef.current = pathname.includes('inspection/');
+  }, [pathname]);
 
   // Auth guard: redirect to welcome when session is lost (sign-out, expiry)
   useEffect(() => {
@@ -37,6 +45,29 @@ export default function AppLayout() {
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: (e) => {
+          if (inspectionRef.current) {
+            e.preventDefault();
+            const target = e.target as string | undefined;
+            Alert.alert(
+              'Leave Inspection?',
+              'Your progress is saved. You can return to this inspection from the dashboard.',
+              [
+                { text: 'Stay', style: 'cancel' },
+                {
+                  text: 'Leave',
+                  style: 'destructive',
+                  onPress: () => {
+                    inspectionRef.current = false;
+                    if (target) router.navigate(`/(app)/${target}`);
+                  },
+                },
+              ],
+            );
+          }
+        },
+      }}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: '#2563EB',
