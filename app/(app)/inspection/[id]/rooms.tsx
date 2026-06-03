@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { getPrescribedItems } from '@/lib/roomItems';
@@ -130,7 +130,9 @@ export default function RoomsScreen() {
     setLoading(false);
   }, [inspectionId]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => { fetchData().finally(() => setLoading(false)); }, [fetchData]),
+  );
 
   // ------------------------------------------------------------------
   // Back handler
