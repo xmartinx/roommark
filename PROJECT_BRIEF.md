@@ -432,7 +432,7 @@ Last updated: 2026-06-02
 - Dashboard: recent inspections list, Start New Inspection CTA, bottom tab bar
 - Properties list: searchable, pull-to-refresh, real Supabase data
 - Properties new: full form with all fields, saves to Supabase
-- Settings: profile card, sign-out
+- Settings: full implementation — profile editing (dirty tracking + animated toast), agency branding section, subscription plan + usage, preferences (state picker, AI disclaimer toggle, photo timestamps toggle), support links (feedback, privacy, terms, version), account actions (sign out, delete account)
 - WA room templates: 10 room types, 108 prescribed items with hasWorking flags
 - Inspection wizard: 3-step (property → type → confirm), date picker, meter readings, keys stepper
 - Inspection creation: inserts inspection + rooms + room_items to Supabase in single atomic flow

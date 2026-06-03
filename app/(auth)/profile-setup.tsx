@@ -68,6 +68,7 @@ export default function ProfileSetupScreen() {
       phone: phone.trim() || null,
       email: userEmail,
       default_state: defaultState,
+      show_photo_timestamps: true,
     });
 
     setLoading(false);

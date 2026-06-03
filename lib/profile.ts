@@ -11,6 +11,7 @@ export interface Profile {
   phone: string | null;
   email: string | null;
   default_state: string;
+  show_photo_timestamps: boolean;
   logo_url: string | null;
   created_at: string;
   updated_at: string;
@@ -18,7 +19,7 @@ export interface Profile {
 
 export type ProfileUpsert = Pick<
   Profile,
-  'id' | 'full_name' | 'agency_name' | 'phone' | 'email' | 'default_state'
+  'id' | 'full_name' | 'agency_name' | 'phone' | 'email' | 'default_state' | 'show_photo_timestamps'
 >;
 
 // ---------------------------------------------------------------------------
@@ -82,6 +83,7 @@ export async function upsertProfile(
       phone: profile.phone ?? null,
       email: profile.email ?? null,
       default_state: profile.default_state,
+      show_photo_timestamps: profile.show_photo_timestamps,
       updated_at: new Date().toISOString(),
     });
 
