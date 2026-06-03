@@ -493,8 +493,6 @@ export default function RoomAssessmentScreen() {
         })
         .eq('id', roomId);
 
-      // Final refresh from DB to ensure consistency
-      await loadData();
     } catch (err) {
       console.error('[Save] Background save failed:', err);
     }
