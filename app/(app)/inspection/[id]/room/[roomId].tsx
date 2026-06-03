@@ -384,8 +384,11 @@ export default function RoomAssessmentScreen() {
 
       if (result.success) {
         console.log('[Assessment] Full response:', JSON.stringify(result.assessment, null, 2));
-        await applyAssessment(result.assessment);
+        // Update local state immediately so review renders with data
+        updateLocalState(result.assessment);
         setScreenState('review');
+        // Save to Supabase in background — don't block the UI
+        saveAssessmentToSupabase(result.assessment);
       } else if (result.error === 'parse_failed') {
         // Show raw transcript, allow manual entry
         Alert.alert(
@@ -411,10 +414,9 @@ export default function RoomAssessmentScreen() {
   }
 
   // ------------------------------------------------------------------
-  // Apply AI assessment to Supabase items
+  // Update local state immediately — UI renders with data right away
   // ------------------------------------------------------------------
-  async function applyAssessment(assessment: { items: Record<string, AssessedItem>; overall_condition: string; general_notes: string | null; maintenance_items: MaintenanceItemSuggestion[] }) {
-    // Diagnostic: log item key matching between Claude and DB
+  function updateLocalState(assessment: { items: Record<string, AssessedItem>; overall_condition: string; general_notes: string | null; maintenance_items: MaintenanceItemSuggestion[] }) {
     const assessmentItemKeys = Object.keys(assessment.items);
     console.log('[Items] Claude returned:', assessmentItemKeys.length, 'items:', assessmentItemKeys);
     console.log('[Items] Room items loaded:', items.length, 'items:', items.map((i) => i.item_key));
@@ -422,53 +424,80 @@ export default function RoomAssessmentScreen() {
     const unmatched = assessmentItemKeys.filter((k) => !matched.includes(k));
     console.log('[Items] Matched:', matched.length, 'Unmatched:', unmatched);
 
-    // Update room_items matching by item_key
-    const updates = items
-      .filter((item) => assessment.items[item.item_key])
-      .map((item) => {
+    // Update items in local state immediately
+    setItems((prev) =>
+      prev.map((item) => {
         const ai = assessment.items[item.item_key];
+        if (!ai) return item;
         return {
-          id: item.id,
+          ...item,
           clean: ai.clean,
           undamaged: ai.undamaged,
           working: ai.working,
           notes: ai.notes,
           flagged: ai.flagged,
         };
-      });
+      }),
+    );
 
-    if (updates.length > 0) {
-      await supabase.from('room_items').upsert(updates);
-    }
-
-    // Insert maintenance items
-    if (assessment.maintenance_items.length > 0 && inspectionId && roomId) {
-      const mInserts: MaintenanceItemInsert[] = assessment.maintenance_items.map((m) => ({
-        inspection_id: inspectionId,
-        room_id: roomId,
-        description: m.description,
-        priority: m.priority,
-        responsibility: m.responsibility,
-        resolved: false,
-      }));
-      await supabase.from('maintenance_items').insert(mInserts);
-    }
-
-    // Update room
     const cond = assessment.overall_condition as 'good' | 'fair' | 'poor';
     setOverallCondition(cond);
     setGeneralNotes(assessment.general_notes);
-    await supabase
-      .from('rooms')
-      .update({
-        overall_condition: cond,
-        general_notes: assessment.general_notes,
-        status: 'complete',
-      })
-      .eq('id', roomId);
+  }
 
-    // Reload data
-    await loadData();
+  // ------------------------------------------------------------------
+  // Save to Supabase in background — does not block the UI
+  // ------------------------------------------------------------------
+  async function saveAssessmentToSupabase(assessment: { items: Record<string, AssessedItem>; overall_condition: string; general_notes: string | null; maintenance_items: MaintenanceItemSuggestion[] }) {
+    try {
+      // Update room_items
+      const updates = items
+        .filter((item) => assessment.items[item.item_key])
+        .map((item) => {
+          const ai = assessment.items[item.item_key];
+          return {
+            id: item.id,
+            clean: ai.clean,
+            undamaged: ai.undamaged,
+            working: ai.working,
+            notes: ai.notes,
+            flagged: ai.flagged,
+          };
+        });
+
+      if (updates.length > 0) {
+        await supabase.from('room_items').upsert(updates);
+      }
+
+      // Insert maintenance items
+      if (assessment.maintenance_items.length > 0 && inspectionId && roomId) {
+        const mInserts: MaintenanceItemInsert[] = assessment.maintenance_items.map((m) => ({
+          inspection_id: inspectionId,
+          room_id: roomId,
+          description: m.description,
+          priority: m.priority,
+          responsibility: m.responsibility,
+          resolved: false,
+        }));
+        await supabase.from('maintenance_items').insert(mInserts);
+      }
+
+      // Update room
+      const cond = assessment.overall_condition as 'good' | 'fair' | 'poor';
+      await supabase
+        .from('rooms')
+        .update({
+          overall_condition: cond,
+          general_notes: assessment.general_notes,
+          status: 'complete',
+        })
+        .eq('id', roomId);
+
+      // Final refresh from DB to ensure consistency
+      await loadData();
+    } catch (err) {
+      console.error('[Save] Background save failed:', err);
+    }
   }
 
   // ------------------------------------------------------------------
