@@ -37,6 +37,7 @@ import type { RoomItemTemplate } from '@/constants/roomTemplates';
 
 // import { useAudioRecorder } from 'expo-audio';
 import { File } from 'expo-file-system';
+import { Paths } from 'expo-file-system';
 // import * as ImageManipulator from 'expo-image-manipulator';
 
 // ---------------------------------------------------------------------------
@@ -88,6 +89,12 @@ export default function RoomAssessmentScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [recordings, setRecordings] = useState<string[]>([]); // URIs
+
+  // Audio recorder — useAudioRecorder from expo-audio (native, EAS rebuild required)
+  // RecordingPresets.HIGH_QUALITY → .m4a (AAC/MP4 container)
+  // const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  // const recorder = useRecorderRef.current?; // placeholder until import is active
+
   const [processing, setProcessing] = useState(false);
   const [processingLabel, setProcessingLabel] = useState('Transcribing...');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -200,7 +207,7 @@ export default function RoomAssessmentScreen() {
 
   // ------------------------------------------------------------------
   // Recording — requires expo-audio native module (EAS rebuild)
-  // RoomMark Rule 11: request permission + set audio mode before recording
+  // RoomMark Rule 11: permission → audio mode → prepareToRecordAsync → record
   // ------------------------------------------------------------------
   async function startRecording() {
     setError(null);
@@ -229,19 +236,34 @@ export default function RoomAssessmentScreen() {
       // Audio mode failure is non-fatal on some devices
     }
 
-    // 3. Start recording with explicit format
-    // RecordingPresets.HIGH_QUALITY → .m4a (AAC/MP4 container)
-    // This format is supported by Whisper for transcription
+    // 3. Prepare and start recording
+    // expo-audio sequence (after EAS rebuild):
+    //   await recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY);
+    //   recorder.record();
     console.log('[Audio Debug] Recorder options:', JSON.stringify(RecordingPresets.HIGH_QUALITY));
     setIsRecording(true);
     setElapsed(0);
   }
 
   async function stopRecording() {
-    // useAudioRecorder.stop() — activates after EAS rebuild
+    // expo-audio stop sequence (after EAS rebuild):
+    //   recorder.stop();
+    //   const rawUri = recorder.uri;  // may be relative
+    //
+    // expo-audio returns a relative URI by default on Android.
+    // Resolve to absolute path using Paths.cache from expo-file-system:
+    //   const absoluteUri = rawUri && !rawUri.startsWith('file://')
+    //     ? Paths.cache.uri + '/' + rawUri
+    //     : rawUri;
+    //   console.log('[Audio Debug] Recorder URI:', rawUri);
+    //   console.log('[Audio Debug] Absolute URI:', absoluteUri);
+    //   setRecordings((prev) => [...prev, absoluteUri]);
+    //
+    // Temporary: simulated URI until EAS rebuild activates expo-audio.
     setIsRecording(false);
-    const fakeUri = `recording-${Date.now()}.m4a`;
-    setRecordings((prev) => [...prev, fakeUri]);
+    const tempUri = `file:///${Paths.cache.uri.split('///')[1] || 'cache'}/recording-${Date.now()}.m4a`;
+    console.log('[Audio Debug] Temp URI:', tempUri);
+    setRecordings((prev) => [...prev, tempUri]);
   }
 
   function toggleRecording() {
