@@ -58,8 +58,12 @@ export async function processRoomObservation(
 
   const json = await response.json();
 
-  // Check for known error types in the response body
+  // Log edge function errors for debugging
   if (json.error) {
+    console.error(
+      `[processRoomObservation] error=${json.error}`,
+      json.message ?? '',
+    );
     return {
       success: false,
       error: json.error,

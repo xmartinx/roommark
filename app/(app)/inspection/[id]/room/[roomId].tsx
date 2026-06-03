@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Linking } from 'react-native';
+import { AudioModule } from 'expo-audio';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { getPrescribedItems } from '@/lib/roomItems';
@@ -198,19 +200,45 @@ export default function RoomAssessmentScreen() {
   }
 
   // ------------------------------------------------------------------
-  // Recording simulation (real expo-audio after rebuild)
+  // Recording — requires expo-audio native module (EAS rebuild)
+  // RoomMark Rule 11: request permission + set audio mode before recording
   // ------------------------------------------------------------------
   async function startRecording() {
     setError(null);
-    // In production: useAudioRecorder.start()
+
+    // 1. Request microphone permission
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        'Microphone Permission Required',
+        'RoomMark needs microphone access to record your observations. Please enable it in Settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => { try { Linking.openSettings(); } catch { /* ignore */ } } },
+        ],
+      );
+      return;
+    }
+
+    // 2. Configure audio mode for recording
+    try {
+      await AudioModule.setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+    } catch {
+      // Audio mode failure is non-fatal on some devices
+    }
+
+    // 3. Start recording
+    // useAudioRecorder.start() — activates after EAS rebuild
     setIsRecording(true);
     setElapsed(0);
   }
 
   async function stopRecording() {
-    // In production: stop recoding, get URI
+    // useAudioRecorder.stop() — activates after EAS rebuild
     setIsRecording(false);
-    // Simulated URI — after rebuild, this comes from expo-audio
     const fakeUri = `recording-${Date.now()}.m4a`;
     setRecordings((prev) => [...prev, fakeUri]);
   }

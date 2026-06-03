@@ -607,6 +607,15 @@ try {
 On the client: if `error: 'parse_failed'` is received, show the raw
 transcript and allow manual item entry. Never lose the inspector's work.
 
+### RoomMark Rule 11 — expo-audio permission and audio mode
+Before starting any recording, always:
+1. Call `AudioModule.requestRecordingPermissionsAsync()` and check `permission.granted`
+2. Call `AudioModule.setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })`
+3. Only then start the recorder
+Import `AudioModule` from `'expo-audio'` (not expo-av).
+Missing either step causes silent recording failure on Android with no error message.
+If permission is denied, show an Alert with an "Open Settings" button that calls `Linking.openSettings()`.
+
 ---
 
 ## Build commands
