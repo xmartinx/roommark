@@ -365,6 +365,22 @@ export default function RoomsScreen() {
     );
   }
 
+  // Inspection not found (RLS mismatch, deleted, or invalid ID)
+  if (!inspection) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color="#9CA3AF" />
+        <Text style={styles.errorText}>Inspection not found</Text>
+        <TouchableOpacity
+          style={styles.errorBackBtn}
+          onPress={() => router.replace('/(app)')}
+        >
+          <Text style={styles.errorBackText}>Back to Dashboard</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -538,6 +554,16 @@ export default function RoomsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  errorContainer: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FFFFFF', paddingHorizontal: 32, gap: 16,
+  },
+  errorText: { fontSize: 17, fontWeight: '600', color: '#6B7280' },
+  errorBackBtn: {
+    backgroundColor: '#2563EB', paddingHorizontal: 20, paddingVertical: 12,
+    borderRadius: 10, marginTop: 8,
+  },
+  errorBackText: { fontSize: 15, color: '#FFFFFF', fontWeight: '600' },
   // Header
   header: {
     flexDirection: 'row',

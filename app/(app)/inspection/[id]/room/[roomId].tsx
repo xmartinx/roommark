@@ -37,7 +37,6 @@ import type { RoomItemTemplate } from '@/constants/roomTemplates';
 
 // import { useAudioRecorder } from 'expo-audio';
 import { File } from 'expo-file-system';
-import * as FileSystem from 'expo-file-system';
 // import * as ImageManipulator from 'expo-image-manipulator';
 
 // ---------------------------------------------------------------------------
@@ -261,17 +260,25 @@ export default function RoomAssessmentScreen() {
     try {
       // Read most recent recording as base64 using File class (Rule 3)
       const audioUri = recordings[recordings.length - 1];
-
-      // Log file details
-      const fileInfo = await FileSystem.getInfoAsync(audioUri);
       console.log('[Audio Debug] File URI:', audioUri);
-      console.log('[Audio Debug] File exists:', fileInfo.exists);
-      console.log('[Audio Debug] File size:', (fileInfo as Record<string, unknown>).size, 'bytes');
-      console.log('[Audio Debug] File extension:', audioUri.split('.').pop());
 
-      const file = new File(audioUri);
-      const audioBase64 = await file.base64();
+      const audioFile = new File(audioUri);
+      const fileExists = audioFile.exists;
+      console.log('[Audio Debug] File exists:', fileExists);
+
+      if (!fileExists) {
+        console.error('[Audio Debug] File does not exist:', audioUri);
+        throw new Error('Recording file not found');
+      }
+
+      const audioBase64 = await audioFile.base64();
       console.log('[Audio Debug] Base64 length:', audioBase64.length);
+
+      if (audioBase64.length < 100) {
+        console.error('[Audio Debug] Base64 too short — recording failed');
+        throw new Error('Recording appears to be empty');
+      }
+
       console.log('[Audio Debug] Base64 first 20 chars:', audioBase64.substring(0, 20));
 
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
