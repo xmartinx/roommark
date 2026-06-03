@@ -15,7 +15,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
-import { AudioModule } from 'expo-audio';
+import { AudioModule, RecordingPresets } from 'expo-audio';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { getPrescribedItems } from '@/lib/roomItems';
@@ -230,8 +230,9 @@ export default function RoomAssessmentScreen() {
       // Audio mode failure is non-fatal on some devices
     }
 
-    // 3. Start recording
-    // useAudioRecorder.start() — activates after EAS rebuild
+    // 3. Start recording with explicit format
+    // RecordingPresets.HIGH_QUALITY → .m4a (AAC/MP4 container)
+    // This format is supported by Whisper for transcription
     setIsRecording(true);
     setElapsed(0);
   }

@@ -222,8 +222,15 @@ Deno.serve(async (req: Request) => {
   let transcript: string;
   try {
     const audioBytes = base64ToUint8Array(body.audio_base64);
+    // Use .buffer to pass an ArrayBuffer to Blob — required for Deno
+    // compatibility. MIME type and filename extension tell Whisper the
+    // audio format. expo-audio records in .m4a (AAC in MP4 container).
+    const audioBlob = new Blob(
+      [audioBytes.buffer],
+      { type: 'audio/m4a' },
+    );
     const formData = new FormData();
-    formData.append('file', new Blob([audioBytes], { type: 'audio/m4a' }), 'recording.m4a');
+    formData.append('file', audioBlob, 'recording.m4a');
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
 
