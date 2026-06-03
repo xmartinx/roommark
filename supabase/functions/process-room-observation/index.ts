@@ -259,6 +259,10 @@ Deno.serve(async (req: Request) => {
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
 
+    // 30-second timeout — prevents hanging on large files or cold connections
+    const whisperController = new AbortController();
+    const whisperTimeout = setTimeout(() => whisperController.abort(), 30000);
+
     const whisperRes = await fetch(
       'https://api.openai.com/v1/audio/transcriptions',
       {
@@ -267,8 +271,10 @@ Deno.serve(async (req: Request) => {
           Authorization: `Bearer ${openaiKey}`,
         },
         body: formData,
+        signal: whisperController.signal,
       },
     );
+    clearTimeout(whisperTimeout);
 
     const whisperJson = await whisperRes.json();
 
@@ -284,6 +290,16 @@ Deno.serve(async (req: Request) => {
 
     transcript = whisperJson.text;
   } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      console.error('[Whisper] Timeout after 30s');
+      return new Response(
+        JSON.stringify({
+          error: 'transcription_failed',
+          message: 'Whisper API timeout — audio may be too large',
+        }),
+        { status: 200, headers: corsHeaders() },
+      );
+    }
     return new Response(
       JSON.stringify({
         error: 'transcription_failed',

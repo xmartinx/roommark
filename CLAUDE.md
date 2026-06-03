@@ -610,18 +610,29 @@ transcript and allow manual item entry. Never lose the inspector's work.
 ### RoomMark Rule 11 — expo-audio confirmed SDK 56 recording sequence
 Confirmed production API for Expo SDK 56. Before starting any recording:
 
-1. `const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)` — at component level
+1. `const recorder = useAudioRecorder(SPEECH_RECORDING_OPTIONS)` — at component level (see Rule 12 for options)
 2. `await AudioModule.requestRecordingPermissionsAsync()` — check `permission.granted`
 3. `await AudioModule.setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })`
-4. `await recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY)` — determines absolute save path
+4. `await recorder.prepareToRecordAsync(SPEECH_RECORDING_OPTIONS)` — determines absolute save path
 5. `recorder.record()` — sync call, starts recording
 6. `await recorder.stop()` — stops and finalises the file
 7. `const absoluteUri = recorder.uri.startsWith('file://') ? recorder.uri : Paths.cache.uri + recorder.uri` — resolve to absolute
 
-Imports: `useAudioRecorder, AudioModule, RecordingPresets` from `'expo-audio'`; `File, Paths` from `'expo-file-system'`.
+Imports: `useAudioRecorder, AudioModule` from `'expo-audio'`; `File, Paths` from `'expo-file-system'`.
 Use `Date.now()` for recording start time; compute elapsed via `setInterval` polling.
 After stop: read audio with `new File(uri)`, check `.exists`, call `.base64()`, verify `.length >= 100`.
 If permission denied: show Alert with "Open Settings" button calling `Linking.openSettings()`.
+
+### RoomMark Rule 12 — Audio recording settings for Whisper
+Use low-bitrate mono settings for voice recording:
+- `sampleRate: 16000` (16kHz sufficient for speech)
+- `numberOfChannels: 1` (mono)
+- `bitRate: 32000` (32kbps)
+- format: m4a/AAC
+This produces ~4KB/second audio, giving ~100KB for a 25-second recording.
+`RecordingPresets.HIGH_QUALITY` produces ~20KB/second which causes
+Whisper API timeouts over cold connections.
+**Never use RecordingPresets.HIGH_QUALITY for voice memos** — music only.
 
 ---
 

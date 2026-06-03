@@ -54,6 +54,12 @@ export async function processRoomObservation(
     ...(params.existingItems?.length ? { existing_items: params.existingItems } : {}),
   };
 
+  // Size check: warn if audio is large enough to risk timeout
+  if (params.audioBase64.length > 150000) {
+    console.warn('[Audio] Large file warning:',
+      params.audioBase64.length, 'chars — may cause timeout');
+  }
+
   const url = `${params.supabaseUrl}/functions/v1/process-room-observation`;
   console.log('[Edge Function URL]', url);
   console.log('[Edge Function Auth] Token length:', params.accessToken?.length ?? 0);

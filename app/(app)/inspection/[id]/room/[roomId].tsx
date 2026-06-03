@@ -15,7 +15,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
-import { AudioModule, RecordingPresets, useAudioRecorder } from 'expo-audio';
+import { AudioModule, useAudioRecorder } from 'expo-audio';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { getPrescribedItems } from '@/lib/roomItems';
@@ -60,6 +60,40 @@ function formatDateStr(dateStr: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Recording options — speech-optimised low bitrate (RoomMark Rule 12)
+// 16kHz mono 32kbps → ~4KB/sec → ~100KB for 25s (well within Whisper limits)
+// ---------------------------------------------------------------------------
+const SPEECH_RECORDING_OPTIONS = {
+  extension: '.m4a',
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 32000,
+  android: {
+    extension: '.m4a',
+    outputFormat: 'mpeg4' as const,
+    audioEncoder: 'aac' as const,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 32000,
+  },
+  ios: {
+    extension: '.m4a',
+    outputFormat: 'mpeg4aac' as const,
+    audioQuality: 0x40,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 32000,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+  web: {
+    mimeType: 'audio/webm',
+    bitsPerSecond: 32000,
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -89,8 +123,8 @@ export default function RoomAssessmentScreen() {
   const [recordings, setRecordings] = useState<string[]>([]); // absolute URIs
 
   // Audio recorder — expo-audio (native, active after EAS rebuild)
-  // RecordingPresets.HIGH_QUALITY → .m4a (AAC in MP4 container)
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  // SPEECH_RECORDING_OPTIONS → .m4a (AAC in MP4 container)
+  const recorder = useAudioRecorder(SPEECH_RECORDING_OPTIONS);
 
   const [processing, setProcessing] = useState(false);
   const [processingLabel, setProcessingLabel] = useState('Transcribing...');
@@ -235,7 +269,7 @@ export default function RoomAssessmentScreen() {
       });
 
       // 3. Prepare recorder — determines save path (absolute)
-      await recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY);
+      await recorder.prepareToRecordAsync(SPEECH_RECORDING_OPTIONS);
 
       // 4. Start recording
       recorder.record();
