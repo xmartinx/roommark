@@ -247,13 +247,25 @@ Deno.serve(async (req: Request) => {
         .map((b) => b.toString(16).padStart(2, '0'))
         .join(' '));
 
-    // Use .buffer to pass an ArrayBuffer to Blob — required for Deno
-    // compatibility. MIME type and filename extension tell Whisper the
-    // audio format. expo-audio records in .m4a (AAC in MP4 container).
+    // Use Uint8Array directly — Deno edge runtime: .buffer may be
+    // detached on manually-filled typed arrays, producing a zero-byte
+    // Blob that hangs the fetch indefinitely.
     const audioBlob = new Blob(
-      [audioBytes.buffer],
+      [audioBytes],
       { type: 'audio/m4a' },
     );
+
+    console.log('[Whisper] Step 1: Blob created, size:', audioBlob.size);
+    if (audioBlob.size === 0) {
+      console.error('[Whisper] Blob is empty — buffer issue');
+      return new Response(JSON.stringify({
+        error: 'transcription_failed',
+        message: 'Audio blob is empty after encoding',
+      }), { status: 200, headers: corsHeaders() });
+    }
+    console.log('[Whisper] Blob size:', audioBlob.size, 'bytes — proceeding to Whisper');
+
+    console.log('[Whisper] Creating FormData...');
     const formData = new FormData();
     formData.append('file', audioBlob, 'recording.m4a');
     formData.append('model', 'whisper-1');
@@ -263,6 +275,7 @@ Deno.serve(async (req: Request) => {
     const whisperController = new AbortController();
     const whisperTimeout = setTimeout(() => whisperController.abort(), 30000);
 
+    console.log('[Whisper] Starting fetch...');
     const whisperRes = await fetch(
       'https://api.openai.com/v1/audio/transcriptions',
       {
@@ -275,6 +288,7 @@ Deno.serve(async (req: Request) => {
       },
     );
     clearTimeout(whisperTimeout);
+    console.log('[Whisper] Response status:', whisperRes.status);
 
     const whisperJson = await whisperRes.json();
 

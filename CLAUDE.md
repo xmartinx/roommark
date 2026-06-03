@@ -804,6 +804,16 @@ not used elsewhere. After rebuild: sessions survive app restarts, token
 refresh is automatic via `autoRefreshToken: true`, and sign-out clears
 AsyncStorage via the Supabase client internally.
 
+### Lesson 10 — Deno Edge Runtime Blob construction
+In Deno edge runtime, pass `Uint8Array` directly to the `Blob` constructor —
+do not use the `.buffer` property:
+- `new Blob([uint8Array])` ✅
+- `new Blob([uint8Array.buffer])` ❌ — may produce a zero-byte or
+  detached buffer in Deno edge runtime, causing the fetch to hang
+  indefinitely instead of failing immediately.
+Always validate `audioBlob.size > 0` after construction before
+proceeding to the Whisper API call.
+
 ---
 
 ## Code completion rule
