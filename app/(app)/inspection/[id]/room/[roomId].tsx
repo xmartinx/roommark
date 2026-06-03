@@ -33,11 +33,11 @@ import type { RoomItemTemplate } from '@/constants/roomTemplates';
 
 // ---------------------------------------------------------------------------
 // Native module imports — WILL NOT WORK UNTIL EAS REBUILD (Rule 1)
-// These imports are correct and ready for after the rebuild.
 // ---------------------------------------------------------------------------
 
 // import { useAudioRecorder } from 'expo-audio';
-// import { File } from 'expo-file-system';
+import { File } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
 // import * as ImageManipulator from 'expo-image-manipulator';
 
 // ---------------------------------------------------------------------------
@@ -233,6 +233,7 @@ export default function RoomAssessmentScreen() {
     // 3. Start recording with explicit format
     // RecordingPresets.HIGH_QUALITY → .m4a (AAC/MP4 container)
     // This format is supported by Whisper for transcription
+    console.log('[Audio Debug] Recorder options:', JSON.stringify(RecordingPresets.HIGH_QUALITY));
     setIsRecording(true);
     setElapsed(0);
   }
@@ -258,11 +259,20 @@ export default function RoomAssessmentScreen() {
     setError(null);
 
     try {
-      // Read most recent recording as base64
-      // After rebuild: const file = new File(recordings[recordings.length - 1]);
-      // After rebuild: const base64 = await file.base64();
-      // For now, send a placeholder that will work after rebuild
-      const audioBase64 = ''; // Will be populated by File class after rebuild
+      // Read most recent recording as base64 using File class (Rule 3)
+      const audioUri = recordings[recordings.length - 1];
+
+      // Log file details
+      const fileInfo = await FileSystem.getInfoAsync(audioUri);
+      console.log('[Audio Debug] File URI:', audioUri);
+      console.log('[Audio Debug] File exists:', fileInfo.exists);
+      console.log('[Audio Debug] File size:', (fileInfo as Record<string, unknown>).size, 'bytes');
+      console.log('[Audio Debug] File extension:', audioUri.split('.').pop());
+
+      const file = new File(audioUri);
+      const audioBase64 = await file.base64();
+      console.log('[Audio Debug] Base64 length:', audioBase64.length);
+      console.log('[Audio Debug] Base64 first 20 chars:', audioBase64.substring(0, 20));
 
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
       const accessToken = session?.access_token ?? '';

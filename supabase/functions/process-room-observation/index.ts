@@ -222,6 +222,15 @@ Deno.serve(async (req: Request) => {
   let transcript: string;
   try {
     const audioBytes = base64ToUint8Array(body.audio_base64);
+
+    // Diagnostic: log audio buffer details
+    console.log('[Edge Debug] Audio base64 length:', body.audio_base64.length);
+    console.log('[Edge Debug] Audio buffer size:', audioBytes.byteLength, 'bytes');
+    console.log('[Edge Debug] First 8 bytes (hex):',
+      Array.from(audioBytes.slice(0, 8))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join(' '));
+
     // Use .buffer to pass an ArrayBuffer to Blob — required for Deno
     // compatibility. MIME type and filename extension tell Whisper the
     // audio format. expo-audio records in .m4a (AAC in MP4 container).
