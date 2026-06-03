@@ -607,18 +607,21 @@ try {
 On the client: if `error: 'parse_failed'` is received, show the raw
 transcript and allow manual item entry. Never lose the inspector's work.
 
-### RoomMark Rule 11 — expo-audio permission, audio mode, and URI resolution
-Before starting any recording, always:
-1. Call `AudioModule.requestRecordingPermissionsAsync()` and check `permission.granted`
-2. Call `AudioModule.setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })`
-3. Call `recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY)` — this ensures the recording file is saved to a known absolute path
-4. Only then call `recorder.record()`
-After recording stops, `recorder.uri` may be a relative path on Android.
-Always resolve to absolute before passing to `File` class:
-`const absoluteUri = rawUri.startsWith('file://') ? rawUri : Paths.cache.uri + '/' + rawUri`
-Import `AudioModule` from `'expo-audio'`, `Paths` from `'expo-file-system'` (not expo-av, not legacy FileSystem).
-Missing `prepareToRecordAsync()` or URI resolution causes `File` class read failure with relative paths.
-If permission is denied, show an Alert with an "Open Settings" button that calls `Linking.openSettings()`.
+### RoomMark Rule 11 — expo-audio confirmed SDK 56 recording sequence
+Confirmed production API for Expo SDK 56. Before starting any recording:
+
+1. `const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)` — at component level
+2. `await AudioModule.requestRecordingPermissionsAsync()` — check `permission.granted`
+3. `await AudioModule.setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })`
+4. `await recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY)` — determines absolute save path
+5. `recorder.record()` — sync call, starts recording
+6. `await recorder.stop()` — stops and finalises the file
+7. `const absoluteUri = recorder.uri.startsWith('file://') ? recorder.uri : Paths.cache.uri + recorder.uri` — resolve to absolute
+
+Imports: `useAudioRecorder, AudioModule, RecordingPresets` from `'expo-audio'`; `File, Paths` from `'expo-file-system'`.
+Use `Date.now()` for recording start time; compute elapsed via `setInterval` polling.
+After stop: read audio with `new File(uri)`, check `.exists`, call `.base64()`, verify `.length >= 100`.
+If permission denied: show Alert with "Open Settings" button calling `Linking.openSettings()`.
 
 ---
 

@@ -15,7 +15,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
-import { AudioModule, RecordingPresets } from 'expo-audio';
+import { AudioModule, RecordingPresets, useAudioRecorder } from 'expo-audio';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { getPrescribedItems } from '@/lib/roomItems';
@@ -32,13 +32,10 @@ import type {
 import type { RoomItemTemplate } from '@/constants/roomTemplates';
 
 // ---------------------------------------------------------------------------
-// Native module imports — WILL NOT WORK UNTIL EAS REBUILD (Rule 1)
+// Native module imports — active after EAS rebuild
 // ---------------------------------------------------------------------------
 
-// import { useAudioRecorder } from 'expo-audio';
-import { File } from 'expo-file-system';
-import { Paths } from 'expo-file-system';
-// import * as ImageManipulator from 'expo-image-manipulator';
+import { File, Paths } from 'expo-file-system';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -87,13 +84,13 @@ export default function RoomAssessmentScreen() {
 
   // --- Recording state ---
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingStartTime, setRecordingStartTime] = useState(0);
   const [elapsed, setElapsed] = useState(0);
-  const [recordings, setRecordings] = useState<string[]>([]); // URIs
+  const [recordings, setRecordings] = useState<string[]>([]); // absolute URIs
 
-  // Audio recorder — useAudioRecorder from expo-audio (native, EAS rebuild required)
-  // RecordingPresets.HIGH_QUALITY → .m4a (AAC/MP4 container)
-  // const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  // const recorder = useRecorderRef.current?; // placeholder until import is active
+  // Audio recorder — expo-audio (native, active after EAS rebuild)
+  // RecordingPresets.HIGH_QUALITY → .m4a (AAC in MP4 container)
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const [processing, setProcessing] = useState(false);
   const [processingLabel, setProcessingLabel] = useState('Transcribing...');
@@ -188,16 +185,19 @@ export default function RoomAssessmentScreen() {
   }, [isRecording, pulseAnim]);
 
   // ------------------------------------------------------------------
-  // Timer
+  // Timer — based on recordingStartTime for accuracy
   // ------------------------------------------------------------------
   useEffect(() => {
     if (isRecording) {
-      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+      timerRef.current = setInterval(() => {
+        const secs = Math.floor((Date.now() - recordingStartTime) / 1000);
+        setElapsed(secs);
+      }, 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [isRecording]);
+  }, [isRecording, recordingStartTime]);
 
   function formatElapsed(seconds: number): string {
     const m = Math.floor(seconds / 60);
@@ -206,64 +206,73 @@ export default function RoomAssessmentScreen() {
   }
 
   // ------------------------------------------------------------------
-  // Recording — requires expo-audio native module (EAS rebuild)
-  // RoomMark Rule 11: permission → audio mode → prepareToRecordAsync → record
+  // Recording — expo-audio (RoomMark Rule 11)
+  // Sequence: permission → audio mode → prepareToRecordAsync → record
+  // After stop: resolve recorder.uri to absolute path via Paths.cache
   // ------------------------------------------------------------------
   async function startRecording() {
     setError(null);
 
-    // 1. Request microphone permission
-    const permission = await AudioModule.requestRecordingPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert(
-        'Microphone Permission Required',
-        'RoomMark needs microphone access to record your observations. Please enable it in Settings.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => { try { Linking.openSettings(); } catch { /* ignore */ } } },
-        ],
-      );
-      return;
-    }
-
-    // 2. Configure audio mode for recording
     try {
+      // 1. Request microphone permission
+      const permission = await AudioModule.requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Microphone Permission Required',
+          'RoomMark needs microphone access to record your observations. Please enable it in Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => { try { Linking.openSettings(); } catch { /* ignore */ } } },
+          ],
+        );
+        return;
+      }
+
+      // 2. Configure audio mode for recording
       await AudioModule.setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
       });
-    } catch {
-      // Audio mode failure is non-fatal on some devices
-    }
 
-    // 3. Prepare and start recording
-    // expo-audio sequence (after EAS rebuild):
-    //   await recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY);
-    //   recorder.record();
-    console.log('[Audio Debug] Recorder options:', JSON.stringify(RecordingPresets.HIGH_QUALITY));
-    setIsRecording(true);
-    setElapsed(0);
+      // 3. Prepare recorder — determines save path (absolute)
+      await recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY);
+
+      // 4. Start recording
+      recorder.record();
+      setIsRecording(true);
+      setRecordingStartTime(Date.now());
+      setElapsed(0);
+    } catch (err) {
+      console.error('[Recording] Start failed:', err);
+      Alert.alert('Recording Error', 'Could not start recording. Please try again.');
+    }
   }
 
   async function stopRecording() {
-    // expo-audio stop sequence (after EAS rebuild):
-    //   recorder.stop();
-    //   const rawUri = recorder.uri;  // may be relative
-    //
-    // expo-audio returns a relative URI by default on Android.
-    // Resolve to absolute path using Paths.cache from expo-file-system:
-    //   const absoluteUri = rawUri && !rawUri.startsWith('file://')
-    //     ? Paths.cache.uri + '/' + rawUri
-    //     : rawUri;
-    //   console.log('[Audio Debug] Recorder URI:', rawUri);
-    //   console.log('[Audio Debug] Absolute URI:', absoluteUri);
-    //   setRecordings((prev) => [...prev, absoluteUri]);
-    //
-    // Temporary: simulated URI until EAS rebuild activates expo-audio.
-    setIsRecording(false);
-    const tempUri = `file:///${Paths.cache.uri.split('///')[1] || 'cache'}/recording-${Date.now()}.m4a`;
-    console.log('[Audio Debug] Temp URI:', tempUri);
-    setRecordings((prev) => [...prev, tempUri]);
+    try {
+      await recorder.stop();
+      setIsRecording(false);
+
+      // Get URI and resolve to absolute path (RoomMark Rule 11)
+      const rawUri = recorder.uri;
+      console.log('[Audio Debug] Raw URI:', rawUri);
+
+      if (!rawUri) {
+        throw new Error('No recording URI after stop');
+      }
+
+      // expo-audio may return a relative URI on Android.
+      // Resolve to absolute using Paths.cache from expo-file-system.
+      const absoluteUri = rawUri.startsWith('file://')
+        ? rawUri
+        : Paths.cache.uri + rawUri;
+
+      console.log('[Audio Debug] Absolute URI:', absoluteUri);
+      setRecordings((prev) => [...prev, absoluteUri]);
+    } catch (err) {
+      console.error('[Recording] Stop failed:', err);
+      Alert.alert('Recording Error', 'Could not save recording. Please try again.');
+    }
   }
 
   function toggleRecording() {
