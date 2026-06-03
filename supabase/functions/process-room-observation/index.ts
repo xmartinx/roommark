@@ -335,6 +335,10 @@ Deno.serve(async (req: Request) => {
       `in this ${body.report_type} condition report for a ` +
       `${body.state} rental property.`;
 
+    console.log('[Claude] Starting request, model:', anthropicModel);
+    const claudeController = new AbortController();
+    const claudeTimeout = setTimeout(() => claudeController.abort(), 60000);
+
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -348,9 +352,13 @@ Deno.serve(async (req: Request) => {
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
+      signal: claudeController.signal,
     });
+    clearTimeout(claudeTimeout);
+    console.log('[Claude] Response status:', claudeRes.status);
 
     const claudeJson = await claudeRes.json();
+    console.log('[Claude] Response ok:', claudeRes.ok);
 
     if (!claudeRes.ok) {
       return new Response(
@@ -365,6 +373,14 @@ Deno.serve(async (req: Request) => {
 
     claudeText = claudeJson.content?.[0]?.text ?? '';
   } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      console.error('[Claude] Timeout after 60s');
+      return new Response(JSON.stringify({
+        error: 'structuring_failed',
+        raw_transcript: transcript,
+        message: 'Claude API timeout',
+      }), { status: 200, headers: corsHeaders() });
+    }
     return new Response(
       JSON.stringify({
         error: 'structuring_failed',
