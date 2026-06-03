@@ -383,6 +383,7 @@ export default function RoomAssessmentScreen() {
       });
 
       if (result.success) {
+        console.log('[Assessment] Full response:', JSON.stringify(result.assessment, null, 2));
         await applyAssessment(result.assessment);
         setScreenState('review');
       } else if (result.error === 'parse_failed') {
@@ -413,6 +414,14 @@ export default function RoomAssessmentScreen() {
   // Apply AI assessment to Supabase items
   // ------------------------------------------------------------------
   async function applyAssessment(assessment: { items: Record<string, AssessedItem>; overall_condition: string; general_notes: string | null; maintenance_items: MaintenanceItemSuggestion[] }) {
+    // Diagnostic: log item key matching between Claude and DB
+    const assessmentItemKeys = Object.keys(assessment.items);
+    console.log('[Items] Claude returned:', assessmentItemKeys.length, 'items:', assessmentItemKeys);
+    console.log('[Items] Room items loaded:', items.length, 'items:', items.map((i) => i.item_key));
+    const matched = assessmentItemKeys.filter((key) => items.some((ri) => ri.item_key === key));
+    const unmatched = assessmentItemKeys.filter((k) => !matched.includes(k));
+    console.log('[Items] Matched:', matched.length, 'Unmatched:', unmatched);
+
     // Update room_items matching by item_key
     const updates = items
       .filter((item) => assessment.items[item.item_key])

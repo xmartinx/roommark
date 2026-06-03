@@ -91,12 +91,16 @@ export async function processRoomObservation(
 
   // Validate the assessment shape
   if (!json.room_name || !json.items) {
+    console.error('[Edge Function] Unexpected response shape:', Object.keys(json));
     return {
       success: false,
       error: 'unexpected_response',
       rawResponse: JSON.stringify(json),
     };
   }
+
+  console.log('[Edge Function] Assessment received:',
+    Object.keys(json.items).length, 'items, condition:', json.overall_condition);
 
   return {
     success: true,

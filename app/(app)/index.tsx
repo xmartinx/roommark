@@ -155,7 +155,7 @@ export default function DashboardScreen() {
       <TouchableOpacity
         style={styles.row}
         activeOpacity={0.6}
-        onPress={() => router.push(`/(app)/inspection/${insp.id}`)}
+        onPress={() => router.push(`/(app)/inspection/${insp.id}/rooms`)}
       >
         <View style={styles.rowTop}>
           <View style={styles.rowAddress}>
