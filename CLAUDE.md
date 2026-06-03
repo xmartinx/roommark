@@ -206,14 +206,14 @@ Claude model strings change. Store as a Supabase secret with a fallback.
 
 ```typescript
 // CORRECT — in edge function
-const model = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-20250514'
+const model = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-6'
 
 // WRONG — hardcoded
 const model = 'claude-opus-4-6'
 ```
 
 The `ANTHROPIC_MODEL` secret is set in the Supabase dashboard.
-Default fallback: `claude-sonnet-4-20250514`
+Default fallback: `claude-sonnet-4-6`
 
 ---
 
@@ -658,7 +658,7 @@ supabase functions serve process-room-observation
 ```
 OPENAI_API_KEY
 ANTHROPIC_API_KEY
-ANTHROPIC_MODEL     default: claude-sonnet-4-20250514
+ANTHROPIC_MODEL     default: claude-sonnet-4-6
 ```
 
 **Local .env (for Supabase client in app — safe to commit .env.example):**

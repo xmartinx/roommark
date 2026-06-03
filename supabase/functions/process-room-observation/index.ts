@@ -214,7 +214,7 @@ Deno.serve(async (req: Request) => {
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
   const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
   const anthropicModel =
-    Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-20250514';
+    Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-4-6';
 
   // ------------------------------------------------------------------
   // Step 1: Transcribe with Whisper
