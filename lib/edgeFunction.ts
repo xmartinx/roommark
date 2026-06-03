@@ -46,6 +46,8 @@ export async function processRoomObservation(
   };
 
   const url = `${params.supabaseUrl}/functions/v1/process-room-observation`;
+  console.log('[Edge Function URL]', url);
+  console.log('[Edge Function Auth] Token length:', params.accessToken?.length ?? 0);
 
   const response = await fetch(url, {
     method: 'POST',
